@@ -26,9 +26,14 @@ _PARAMS = {"key": GEMINI_API_KEY}
 
 
 def _retryable(exc: BaseException) -> bool:
-    """Retry on 429 rate-limit, 5xx errors, and connection issues."""
+    """Retry on transient 5xx errors and connection issues.
+
+    429 (RESOURCE_EXHAUSTED) is NOT retried — both per-minute rate limits and
+    daily quota exhaustion come back as 429; retrying is wasteful because the
+    caller already catches RetryError and falls back to a template.
+    """
     if isinstance(exc, httpx.HTTPStatusError):
-        return exc.response.status_code in (429, 500, 502, 503, 504)
+        return exc.response.status_code in (500, 502, 503, 504)
     return isinstance(exc, (httpx.ConnectError, httpx.TimeoutException))
 
 
