@@ -2,15 +2,12 @@
 
 from __future__ import annotations
 
-import json
 import time
-from pathlib import Path
 
 import yaml
 
-from core.config import CLIENTS_DIR, DATE_RANGE_DAYS, MAX_ASSETS_PER_BRAND
+from core.config import CLIENTS_DIR
 from core.logging import get_logger
-from core.doc_updater import append_phase_notes
 
 _log = get_logger(__name__)
 

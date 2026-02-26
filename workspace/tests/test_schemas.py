@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 
-import pytest
 
 from core.enums import (
     AoTType,
@@ -15,10 +14,9 @@ from core.enums import (
     MessagingAngle,
     Platform,
     QAResult,
-    RiskLevel,
 )
 from core.schemas_aot import AoTAtom
-from core.schemas_asset import Asset, Metrics, PlatformFields, Provenance
+from core.schemas_asset import Asset, Provenance
 from core.schemas_brief import BriefObject
 from core.schemas_qa import QAReport, QAViolation
 from core.schemas_tag import TagSet

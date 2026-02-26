@@ -1,0 +1,122 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ── 1. Lint & static checks ──────────────────────────────────────────────
+  lint:
+    name: Lint (ruff)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install ruff
+        run: pip install ruff
+
+      - name: Lint workspace/
+        run: ruff check workspace/ --select E,F,W --ignore E501
+
+  # ── 2. Unit tests (matrix) ───────────────────────────────────────────────
+  test:
+    name: Tests (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    needs: lint
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ matrix.python-version }}-${{ hashFiles('workspace/requirements.txt') }}
+          restore-keys: pip-${{ matrix.python-version }}-
+
+      - name: Install dependencies
+        run: pip install -r workspace/requirements.txt
+
+      - name: Line-count enforcement
+        working-directory: workspace
+        run: python scripts/check_linecount.py
+
+      - name: Unit tests
+        working-directory: workspace
+        run: pytest tests/ -v --tb=short --junit-xml=test-results-${{ matrix.python-version }}.xml
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.python-version }}
+          path: workspace/test-results-${{ matrix.python-version }}.xml
+
+  # ── 3. Pipeline smoke test ────────────────────────────────────────────────
+  smoke:
+    name: Smoke test (demo pipeline)
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-3.11-${{ hashFiles('workspace/requirements.txt') }}
+          restore-keys: pip-3.11-
+
+      - name: Install dependencies
+        run: pip install -r workspace/requirements.txt
+
+      - name: Copy env
+        working-directory: workspace
+        run: cp .env.example .env
+
+      - name: Run demo pipeline (empty)
+        working-directory: workspace
+        run: python cli.py run --workspace sample_client
+
+      - name: Run CSV pipeline (QA PASS)
+        working-directory: workspace
+        run: python cli.py run --workspace sample_client --csv ads.csv
+
+      - name: Run scheduler once
+        working-directory: workspace
+        run: python cli.py schedule --once
+
+      - name: Check crew graceful no-key message
+        working-directory: workspace
+        run: python cli.py crew --workspace sample_client
+
+      - name: Upload run artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pipeline-run-artifacts
+          path: workspace/clients/sample_client/runs/

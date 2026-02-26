@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
 
 from core.schemas_brief import (
     Audience,

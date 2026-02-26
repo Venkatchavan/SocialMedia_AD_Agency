@@ -7,7 +7,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Generator
 
-from core.config import DATA_DIR, DATABASE_URL
+from core.config import DATA_DIR
 from core.logging import get_logger
 
 _log = get_logger(__name__)

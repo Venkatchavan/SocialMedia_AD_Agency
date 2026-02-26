@@ -97,7 +97,6 @@ def _cmd_check() -> None:
 
 
 def _cmd_crew(workspace_id: str) -> None:
-    import os
     from orchestration.crew import _get_llm
     console.print(f"[bold blue]Running CrewAI pipeline for: {workspace_id}[/]")
     llm = _get_llm()

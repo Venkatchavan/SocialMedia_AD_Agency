@@ -11,7 +11,6 @@ from core.enums import QAResult
 from core.errors import QAFailError
 from core.logging import get_logger
 from core.schemas_asset import Asset
-from analyzers.comment_miner import CommentThemes
 from analyzers.media_analyzer import analyze_batch
 from briefs.brief_renderer_md import render_brief_md
 from briefs.brief_writer import write_brief
@@ -54,7 +53,7 @@ def run_pipeline(
     ranked = rank_assets(assets, tags)
     clusters = cluster_tags(tags)
     insights_md = generate_insights(clusters, ranked)
-    aot_atoms = write_aot_ledger(clusters, tags, rp / "aot_ledger.jsonl")
+    write_aot_ledger(clusters, tags, rp / "aot_ledger.jsonl")
     _write(rp / "clusters.json", [c.model_dump() for c in clusters])
     _write(rp / "insights.md", insights_md, is_text=True)
     append_phase_notes(
@@ -98,7 +97,7 @@ def run_pipeline(
         clusters_json=[c.model_dump() for c in clusters],
     )
     export_md(workspace_id, run_id, brief_md, insights_md, qa_md)
-    zip_path = package_run(workspace_id, run_id)
+    package_run(workspace_id, run_id)
     finish_run(run_id, status="completed")
     append_phase_notes(
         workspace_id, run_id, "EXPORT",

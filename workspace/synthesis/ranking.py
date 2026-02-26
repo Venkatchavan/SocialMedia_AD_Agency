@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Optional
 
 from core.schemas_asset import Asset
 from core.schemas_tag import TagSet

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
 
 from qa.pii_redaction import has_pii, redact, scan_texts
 

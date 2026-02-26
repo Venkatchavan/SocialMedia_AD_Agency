@@ -1,5 +1,7 @@
 # Creative Intelligence OS
 
+[![CI](https://github.com/Venkatchavan/SocialMedia_AD_Agency/actions/workflows/ci.yml/badge.svg)](https://github.com/Venkatchavan/SocialMedia_AD_Agency/actions/workflows/ci.yml)
+
 A complete, runnable internal mini-SaaS backend that combines **TikTok + Meta + X + Pinterest** ad research into one pipeline:
 
 **Collect → Analyze → Synthesize → Brief → QA Gate → Export**

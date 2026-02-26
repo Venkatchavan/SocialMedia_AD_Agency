@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 
 from core.schemas_asset import Asset
 from db.sqlite import get_connection

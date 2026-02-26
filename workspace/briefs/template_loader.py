@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 
 from core.config import workspace_path
 from core.logging import get_logger
