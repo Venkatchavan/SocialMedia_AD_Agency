@@ -30,24 +30,33 @@ def run_actor(
     if not APIFY_TOKEN:
         raise CollectionError("APIFY_TOKEN is not set")
 
-    url = f"{_BASE}/acts/{actor_id}/runs"
+    actor_slug = actor_id.replace("/", "~")
+    url = f"{_BASE}/acts/{actor_slug}/runs"
     _log.info("Starting Apify actor %s", actor_id)
-    with httpx.Client(timeout=timeout_secs) as client:
-        resp = client.post(url, json=run_input, headers=_headers())
-        resp.raise_for_status()
-        run_data = resp.json()["data"]
-        run_id = run_data["id"]
-        dataset_id = run_data.get("defaultDatasetId", "")
 
-        # Wait for finish
-        wait_url = f"{_BASE}/actor-runs/{run_id}?waitForFinish={timeout_secs}"
-        wait_resp = client.get(wait_url, headers=_headers())
-        wait_resp.raise_for_status()
+    # Start the run (short timeout — just needs to create, not wait)
+    resp = httpx.post(url, json=run_input, headers=_headers(), timeout=30)
+    resp.raise_for_status()
+    run_id = resp.json()["data"]["id"]
 
-        # Fetch dataset items
-        items_url = f"{_BASE}/datasets/{dataset_id}/items"
-        items_resp = client.get(items_url, headers=_headers())
-        items_resp.raise_for_status()
-        items: list[dict[str, Any]] = items_resp.json()
+    # Poll for finish — add 30s buffer so httpx doesn't race Apify's long-poll
+    wait_url = f"{_BASE}/actor-runs/{run_id}?waitForFinish={timeout_secs}"
+    wait_resp = httpx.get(wait_url, headers=_headers(), timeout=timeout_secs + 30)
+    wait_resp.raise_for_status()
+    finished = wait_resp.json()["data"]
+    status = finished.get("status", "")
+    if status not in ("SUCCEEDED",):
+        raise CollectionError(f"Apify actor run {run_id} ended with status={status}")
+    dataset_id = finished.get("defaultDatasetId", "")
+    if not dataset_id:
+        raise CollectionError(f"Apify actor run {run_id} returned no dataset")
+
+    # Fetch dataset items
+    items_url = f"{_BASE}/datasets/{dataset_id}/items"
+    items_resp = httpx.get(items_url, headers=_headers(), timeout=60)
+    items_resp.raise_for_status()
+    items: list[dict[str, Any]] = items_resp.json()
+    _log.info("Apify actor %s returned %d items", actor_id, len(items))
+    return items
     _log.info("Apify actor %s returned %d items", actor_id, len(items))
     return items

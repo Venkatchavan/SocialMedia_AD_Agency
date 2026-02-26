@@ -33,6 +33,15 @@ def main() -> None:
     crew_p = sub.add_parser("crew", help="Run pipeline via CrewAI agents")
     crew_p.add_argument("--workspace", "-w", default="sample_client")
 
+    # collect command
+    coll_p = sub.add_parser("collect", help="Collect live ads from TikTok/Meta via Apify")
+    coll_p.add_argument("--workspace", "-w", default="sample_client")
+    coll_p.add_argument("--platform", choices=["tiktok", "meta", "pinterest"], default="tiktok")
+    coll_p.add_argument("--brand", default="tech")
+    coll_p.add_argument("--keywords", help="Comma-separated keywords", default="")
+    coll_p.add_argument("--count", type=int, default=10, help="Results per keyword")
+    coll_p.add_argument("--run", action="store_true", help="Run full pipeline after collecting")
+
     # preflight command
     pre_p = sub.add_parser("preflight", help="Run compliance pre-run checklist for a workspace")
     pre_p.add_argument("--workspace", "-w", default="sample_client")
@@ -57,6 +66,8 @@ def main() -> None:
 
     if args.command == "run":
         _cmd_run(args.workspace, args.csv)
+    elif args.command == "collect":
+        _cmd_collect(args.workspace, args.platform, args.brand, args.keywords, args.count, args.run)
     elif args.command == "schedule":
         _cmd_schedule(getattr(args, "once", False))
     elif args.command == "check":
@@ -94,6 +105,58 @@ def _cmd_run(workspace_id: str, csv_path: str | None) -> None:
     except Exception as exc:
         console.print(f"[bold red]✗ Pipeline failed:[/] {exc}")
         sys.exit(1)
+
+
+def _cmd_collect(
+    workspace_id: str,
+    platform: str,
+    brand: str,
+    keywords_str: str,
+    count: int,
+    run_after: bool,
+) -> None:
+    from core.utils_time import utcnow_iso
+    import re
+    run_id = re.sub(r"[^0-9_]", "", utcnow_iso()[:16].replace("T", "_").replace(":", ""))
+    keywords = [k.strip() for k in keywords_str.split(",") if k.strip()]
+
+    console.print(f"[bold blue]Collecting {platform.upper()} ads[/] brand=[cyan]{brand}[/] keywords={keywords} count={count}")
+
+    assets = []
+    try:
+        if platform == "tiktok":
+            from collectors.tiktok_collector import TikTokCollector
+            assets = TikTokCollector().collect(
+                workspace_id, run_id, brand,
+                keywords=keywords, count_per_keyword=count,
+            )
+        elif platform == "meta":
+            from collectors.meta_collector import MetaCollector
+            assets = MetaCollector().collect(
+                workspace_id, run_id, brand,
+                ad_library_urls=keywords,
+            )
+        elif platform == "pinterest":
+            from collectors.pinterest_collector import PinterestCollector
+            assets = PinterestCollector().collect(
+                workspace_id, run_id, brand,
+                keywords=keywords, count_per_keyword=count,
+            )
+    except Exception as exc:
+        console.print(f"[bold red]✗ Collection failed:[/] {exc}")
+        sys.exit(1)
+
+    console.print(f"[bold green]✓ Collected {len(assets)} assets[/]")
+    for a in assets[:5]:
+        console.print(f"  [dim]{a.asset_id}[/] — {(a.caption_or_copy or a.headline or '')[:80]}")
+    if len(assets) > 5:
+        console.print(f"  [dim]... and {len(assets) - 5} more[/]")
+
+    if run_after and assets:
+        console.print("\n[bold blue]Running pipeline on collected assets...[/]")
+        from orchestration.pipeline import run_pipeline
+        result = run_pipeline(workspace_id, assets)
+        console.print(f"[bold green]✓ Pipeline completed:[/] {result}")
 
 
 def _cmd_schedule(once: bool = False) -> None:
