@@ -33,6 +33,26 @@ def main() -> None:
     crew_p = sub.add_parser("crew", help="Run pipeline via CrewAI agents")
     crew_p.add_argument("--workspace", "-w", default="sample_client")
 
+    # preflight command
+    pre_p = sub.add_parser("preflight", help="Run compliance pre-run checklist for a workspace")
+    pre_p.add_argument("--workspace", "-w", default="sample_client")
+
+    # cleanup command
+    clean_p = sub.add_parser("cleanup", help="Purge expired runs per retention policy")
+    clean_p.add_argument("--workspace", "-w", default=None, help="Specific workspace (omit = all)")
+    clean_p.add_argument("--dry-run", action="store_true", help="Preview without deleting")
+
+    # incident command
+    inc_p = sub.add_parser("incident", help="Trigger incident response for a run")
+    inc_p.add_argument("--workspace", "-w", required=True)
+    inc_p.add_argument("--run-id", required=True)
+    inc_p.add_argument("--type", default="other",
+                       choices=["pii_leaked", "unauthorized_collection",
+                                "competitor_copy_exported", "bypass_instruction_detected",
+                                "cross_workspace_contamination", "other"])
+    inc_p.add_argument("--description", default="Manual incident trigger")
+    inc_p.add_argument("--rotate-keys", action="store_true")
+
     args = parser.parse_args()
 
     if args.command == "run":
@@ -43,6 +63,12 @@ def main() -> None:
         _cmd_check()
     elif args.command == "crew":
         _cmd_crew(args.workspace)
+    elif args.command == "preflight":
+        _cmd_preflight(args.workspace)
+    elif args.command == "cleanup":
+        _cmd_cleanup(args.workspace, dry_run=args.dry_run)
+    elif args.command == "incident":
+        _cmd_incident(args.workspace, args.run_id, args.type, args.description, args.rotate_keys)
     else:
         parser.print_help()
 
@@ -117,6 +143,66 @@ def _cmd_crew(workspace_id: str) -> None:
     except Exception as exc:
         console.print(f"[bold red]Crew error:[/] {exc}")
         sys.exit(1)
+
+
+def _cmd_preflight(workspace_id: str) -> None:
+    from compliance.preflight import run_preflight
+    console.print(f"[bold blue]Running preflight for workspace: {workspace_id}[/]")
+    report = run_preflight(workspace_id, raise_on_error=False)
+    for w in report.warnings:
+        console.print(f"  [yellow]WARN[/]  {w}")
+    for e in report.errors:
+        console.print(f"  [bold red]ERROR[/] {e}")
+    if report.passed:
+        console.print("[bold green]✓ Preflight PASS[/]")
+    else:
+        console.print("[bold red]✗ Preflight FAIL[/] — fix errors before running pipeline")
+        sys.exit(1)
+
+
+def _cmd_cleanup(workspace_id: str | None, *, dry_run: bool = False) -> None:
+    from compliance.cleanup import purge_expired_runs, purge_all_workspaces
+    tag = "[dim][DRY RUN][/dim] " if dry_run else ""
+    if workspace_id:
+        console.print(f"{tag}[bold blue]Running cleanup for workspace: {workspace_id}[/]")
+        report = purge_expired_runs(workspace_id, dry_run=dry_run)
+        reports = [report]
+    else:
+        console.print(f"{tag}[bold blue]Running cleanup for ALL workspaces[/]")
+        reports = purge_all_workspaces(dry_run=dry_run)
+    for r in reports:
+        mb = r.bytes_freed / 1_048_576
+        console.print(
+            f"  [cyan]{r.workspace_id}[/]: {r.total_runs_purged} run(s) purged, "
+            f"{len(r.sensitive_files_removed)} sensitive file(s) removed, "
+            f"{mb:.2f} MB freed"
+        )
+        for err in r.errors:
+            console.print(f"    [red]Error:[/] {err}")
+    console.print("[bold green]✓ Cleanup complete[/]")
+
+
+def _cmd_incident(
+    workspace_id: str,
+    run_id: str,
+    incident_type: str,
+    description: str,
+    rotate_keys: bool,
+) -> None:
+    from compliance.incident import trigger_incident
+    console.print(f"[bold red]⚠ Triggering incident response[/] workspace={workspace_id} run={run_id}")
+    incident = trigger_incident(
+        run_id=run_id,
+        workspace_id=workspace_id,
+        incident_type=incident_type,
+        description=description,
+        key_rotation_required=rotate_keys,
+    )
+    for action in incident.actions_taken:
+        console.print(f"  [green]✓[/] {action}")
+    if incident.key_rotation_required:
+        console.print("[bold yellow]⚠ Rotate your API keys in .env immediately.[/]")
+    console.print(f"[bold green]✓ Incident logged[/] ({len(incident.data_purged)} files purged)")
 
 
 if __name__ == "__main__":

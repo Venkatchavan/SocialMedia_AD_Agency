@@ -114,6 +114,30 @@ jobs:
         working-directory: workspace
         run: python cli.py crew --workspace sample_client
 
+      - name: Preflight check
+        working-directory: workspace
+        run: python cli.py preflight --workspace sample_client
+
+      - name: Cleanup dry-run (all workspaces)
+        working-directory: workspace
+        run: python cli.py cleanup --dry-run
+
+      - name: Incident response smoke test
+        working-directory: workspace
+        run: |
+          # Get the latest run_id from the CSV pipeline run above
+          RUN_ID=$(python -c "
+          from pathlib import Path
+          runs = sorted((Path('clients/sample_client/runs')).iterdir())
+          print(runs[-1].name) if runs else print('no-run')
+          ")
+          echo "Using run_id: $RUN_ID"
+          python cli.py incident \
+            --workspace sample_client \
+            --run-id "$RUN_ID" \
+            --type pii_leaked \
+            --description "CI smoke test incident"
+
       - name: Upload run artifacts
         if: always()
         uses: actions/upload-artifact@v4

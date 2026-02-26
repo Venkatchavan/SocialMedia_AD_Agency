@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from datetime import datetime, timezone
 
+from compliance.preflight import run_preflight, PreflightError
 from core.config import run_path
 from core.doc_updater import append_phase_notes
 from core.enums import QAResult
@@ -35,11 +36,21 @@ def run_pipeline(
     comment_items: list[dict] | None = None,
     competitor_texts: list[str] | None = None,
 ) -> dict:
-    """Execute the full pipeline: Analyze → Synthesize → Brief → QA → Export."""
+    """Execute the full pipeline: Preflight → Analyze → Synthesize → Brief → QA → Export."""
     run_id = datetime.now(timezone.utc).strftime("%Y-%m-%d_%H%M%S")
     init_db()
     create_run(run_id, workspace_id, notes="pipeline run")
     rp = run_path(workspace_id, run_id)
+
+    # Phase 0: Preflight compliance check
+    preflight = run_preflight(workspace_id, raise_on_error=False)
+    append_phase_notes(workspace_id, run_id, "PREFLIGHT",
+                       executed="Compliance preflight",
+                       errors=preflight.errors,
+                       artifacts=[])
+    if not preflight.passed:
+        finish_run(run_id, status="preflight_fail")
+        raise PreflightError(preflight.summary())
 
     # Phase 1: Analyze
     append_phase_notes(workspace_id, run_id, "ANALYZE", executed="Tag assets")

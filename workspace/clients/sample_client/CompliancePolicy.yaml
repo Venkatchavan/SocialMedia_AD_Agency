@@ -1,0 +1,35 @@
+# CompliancePolicy.yaml — sample_client workspace
+# Overrides the global LEGAL_COMPLIANCE.md baseline (stricter-wins merge).
+# See workspace/compliance/policy_loader.py for full field reference.
+
+# Data retention: delete runs older than 30 days (global default: 90)
+retention_days: 30
+
+# Cap assets per brand to 20 in this workspace
+max_assets_per_brand: 20
+
+# Only run ads on these platforms
+allowed_platforms:
+  - tiktok
+  - meta
+
+# QA will block any brief mentioning these product categories
+prohibited_categories: []
+
+# High-risk content categories requiring extra claim checks
+high_risk_flags:
+  - health
+  - finance
+
+# All three QA checks must remain enabled
+pii_checks_enabled: true
+copy_similarity_enabled: true
+claim_checks_enabled: true
+bypass_detection_enabled: true
+
+# Require workspace setup files
+require_brand_bible: true
+require_competitors_file: false   # not required for sample/demo workspace
+
+# Additional blocked domains (beyond the global allowlist)
+extra_blocklist_domains: []

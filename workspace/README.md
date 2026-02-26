@@ -57,7 +57,27 @@ pytest tests/ -v
 
 ### 7. Start weekly scheduler
 ```bash
-python cli.py schedule
+python cli.py schedule          # loop continuously
+python cli.py schedule --once   # run one cycle and exit
+```
+
+### 8. Compliance commands
+
+```bash
+# Pre-run checklist gate (§11) — validates workspace config before pipeline
+python cli.py preflight --workspace sample_client
+
+# Data retention cleanup (§6.3) — purge expired runs + raw sensitive files
+python cli.py cleanup --workspace sample_client --dry-run   # preview
+python cli.py cleanup                                        # all workspaces
+
+# Incident response (§14) — purge data, write notes, log to incident_log.jsonl
+python cli.py incident \
+  --workspace sample_client \
+  --run-id 2026-02-26_143355 \
+  --type pii_leaked \
+  --description "Accidental PII in tags.json" \
+  --rotate-keys
 ```
 
 ---
@@ -121,17 +141,26 @@ workspace/
 │   ├── crew.py
 │   ├── pipeline.py
 │   └── scheduler.py
+├── compliance/                 # Legal + security + agentic compliance (§6–14)
+│   ├── __init__.py
+│   ├── policy_loader.py        # Per-client CompliancePolicy.yaml override (§13)
+│   ├── url_validator.py        # SSRF + domain allowlist guard (§7.2)
+│   ├── preflight.py            # Operator pre-run checklist gate (§11)
+│   ├── cleanup.py              # Automated data retention + purge (§6.3)
+│   └── incident.py             # Incident response handler (§14)
 ├── scripts/
 │   └── check_linecount.py
 ├── tests/
 │   ├── test_schemas.py
 │   ├── test_redaction.py
-│   └── test_template_engine.py
+│   ├── test_template_engine.py
+│   ├── test_compliance_policy.py   # URL validator, policy loader, preflight
+│   └── test_compliance_runtime.py  # Cleanup job, incident handler
 ├── clients/
 │   └── sample_client/
 │       ├── BrandBible.md
 │       ├── BriefTemplate.md
-│       ├── CompliancePolicy.md
+│       ├── CompliancePolicy.yaml   # Per-client compliance overrides
 │       └── Competitors.yml
 ├── requirements.txt
 └── .env.example
@@ -143,15 +172,16 @@ workspace/
 
 | # | Stage | Agent | Output |
 |---|-------|-------|--------|
-| 0 | Doc Update | (auto) | `phase_notes.md` |
-| 1 | Plan | Research Planner | `plan.json` |
-| 2 | Collect | Platform Collectors | `assets.json`, `raw_refs.json` |
-| 3 | Analyze | Media Analyzer + Comment Miner | `tags.json`, `comment_themes.json` |
-| 4 | Synthesize | Synthesizer | `clusters.json`, `insights.md`, `aot_ledger.jsonl` |
-| 5 | Brief | Brief Writer | `brief.md`, `brief.json` |
-| 6 | QA Gate | QA Agent | `qa_report.json` (blocks export on FAIL) |
-| 7 | Export | Exporter | JSON bundle + zip |
-| 8 | Scheduler | Scheduler | Weekly auto-refresh |
+| 0 | **Preflight** | Compliance Gate | `phase_notes.md` (FAIL blocks run) |
+| 1 | Doc Update | (auto) | `phase_notes.md` |
+| 2 | Plan | Research Planner | `plan.json` |
+| 3 | Collect | Platform Collectors | `assets.json`, `raw_refs.json` |
+| 4 | Analyze | Media Analyzer + Comment Miner | `tags.json`, `comment_themes.json` |
+| 5 | Synthesize | Synthesizer | `clusters.json`, `insights.md`, `aot_ledger.jsonl` |
+| 6 | Brief | Brief Writer | `brief.md`, `brief.json` |
+| 7 | QA Gate | QA Agent | `qa_report.json` (blocks export on FAIL) |
+| 8 | Export | Exporter | JSON bundle + zip |
+| 9 | Scheduler | Scheduler | Weekly auto-refresh |
 
 ---
 
