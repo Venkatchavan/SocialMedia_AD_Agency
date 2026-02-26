@@ -51,7 +51,7 @@ class Script(BaseModel):
     cta_line: str = ""
 
 
-class TestVariant(BaseModel):
+class BriefTestVariant(BaseModel):
     variant: str = ""
     hook: str = ""
     angle: str = ""
@@ -83,6 +83,6 @@ class BriefObject(BaseModel):
     )
     hook_bank: list[str] = Field(default_factory=list)
     scripts: list[Script] = Field(default_factory=list)
-    testing_matrix: list[TestVariant] = Field(default_factory=list)
+    testing_matrix: list[BriefTestVariant] = Field(default_factory=list)
     risks: RiskCompliance = Field(default_factory=RiskCompliance)
     evidence_assets: list[str] = Field(default_factory=list)

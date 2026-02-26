@@ -14,7 +14,7 @@ from core.schemas_brief import (
     RiskCompliance,
     Script,
     ScriptBeat,
-    TestVariant,
+    BriefTestVariant,
 )
 from briefs.brief_renderer_md import render_brief_md
 
@@ -65,7 +65,7 @@ def _make_brief(**overrides) -> BriefObject:
             )
         ],
         testing_matrix=[
-            TestVariant(
+            BriefTestVariant(
                 variant="V1",
                 hook="curiosity_gap",
                 angle="convenience",

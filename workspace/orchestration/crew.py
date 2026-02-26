@@ -1,108 +1,111 @@
 """orchestration.crew — CrewAI agent and task definitions."""
 
 from __future__ import annotations
+import os
+from typing import Optional
 
 from crewai import Agent, Task, Crew, Process
 
 
+def _get_llm() -> Optional[str]:
+    """Return LLM model string if any key is configured, else None."""
+    if os.getenv("OPENAI_API_KEY"):
+        return "gpt-4o-mini"
+    if os.getenv("GEMINI_API_KEY"):
+        return "gemini/gemini-1.5-flash"
+    return None
+
+
+def _make_agent(role: str, goal: str, backstory: str) -> Agent:
+    llm = _get_llm()
+    kwargs = dict(role=role, goal=goal, backstory=backstory, verbose=True, allow_delegation=False)
+    if llm:
+        kwargs["llm"] = llm
+    return Agent(**kwargs)
+
+
 def build_research_planner() -> Agent:
-    return Agent(
+    return _make_agent(
         role="Research Planner",
         goal="Define scope, sampling budgets, queries, and collection plan",
         backstory=(
             "You are a senior media strategist. You determine which platforms, "
             "keywords, and budgets to use for competitive ad research."
         ),
-        verbose=True,
-        allow_delegation=False,
     )
 
 
 def build_collector_agent(platform: str) -> Agent:
-    return Agent(
+    return _make_agent(
         role=f"{platform.title()} Collector",
         goal=f"Collect public ads from {platform} via approved APIs",
         backstory=(
             f"You collect ad creatives from {platform} using Apify actors "
             "or official APIs. You never bypass authentication or anti-bot protections."
         ),
-        verbose=True,
-        allow_delegation=False,
     )
 
 
 def build_media_analyzer() -> Agent:
-    return Agent(
+    return _make_agent(
         role="Media Analyzer",
         goal="Extract deterministic tags from ad creatives using vision or heuristic rules",
         backstory=(
             "You analyze ad images/videos and produce structured tags "
             "(format, hook, angle, offer, proof, CTA, risk) using an enum-only taxonomy."
         ),
-        verbose=True,
-        allow_delegation=False,
     )
 
 
 def build_comment_miner() -> Agent:
-    return Agent(
+    return _make_agent(
         role="Comment Miner",
         goal="Extract anonymized themes from ad comments without storing PII",
         backstory=(
             "You process raw comments to find questions, objections, and desire language. "
             "You never store raw comments or personal identifiers."
         ),
-        verbose=True,
-        allow_delegation=False,
     )
 
 
 def build_synthesizer() -> Agent:
-    return Agent(
+    return _make_agent(
         role="Synthesizer",
         goal="Cluster winners, extract patterns, and write AoT atoms",
         backstory=(
             "You rank ads by engagement+recency, cluster by format/angle/hook/offer, "
             "and produce evidence-backed insights with Atom-of-Thought reasoning."
         ),
-        verbose=True,
-        allow_delegation=False,
     )
 
 
 def build_brief_writer() -> Agent:
-    return Agent(
+    return _make_agent(
         role="Brief Writer",
         goal="Generate a complete creative brief from insights and brand bible",
         backstory=(
             "You write performance creative briefs with SMP, RTBs, hooks, scripts, "
             "and a testing matrix. Every claim traces to asset evidence."
         ),
-        verbose=True,
-        allow_delegation=False,
     )
 
 
 def build_qa_agent() -> Agent:
-    return Agent(
+    return _make_agent(
         role="QA Gate",
         goal="Validate brief for PII, copy overlap, and claim risks — block export on FAIL",
         backstory=(
             "You enforce compliance: no PII, no verbatim competitor copy, "
             "no unsupported medical/financial claims. FAIL blocks export."
         ),
-        verbose=True,
-        allow_delegation=False,
     )
 
 
 def build_exporter() -> Agent:
-    return Agent(
+    return _make_agent(
         role="Exporter",
         goal="Package approved deliverables as JSON, Markdown, and optional zip",
         backstory="You export final approved briefs and artifacts, excluding raw comments.",
-        verbose=True,
-        allow_delegation=False,
     )
 
 

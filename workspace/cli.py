@@ -23,7 +23,8 @@ def main() -> None:
     run_p.add_argument("--csv", help="Optional CSV path for manual import")
 
     # schedule command
-    sub.add_parser("schedule", help="Start the weekly scheduler loop")
+    sched_p = sub.add_parser("schedule", help="Start the weekly scheduler loop")
+    sched_p.add_argument("--once", action="store_true", help="Run one cycle and exit")
 
     # check command
     sub.add_parser("check", help="Run line-count enforcement check")
@@ -37,7 +38,7 @@ def main() -> None:
     if args.command == "run":
         _cmd_run(args.workspace, args.csv)
     elif args.command == "schedule":
-        _cmd_schedule()
+        _cmd_schedule(getattr(args, "once", False))
     elif args.command == "check":
         _cmd_check()
     elif args.command == "crew":
@@ -69,10 +70,16 @@ def _cmd_run(workspace_id: str, csv_path: str | None) -> None:
         sys.exit(1)
 
 
-def _cmd_schedule() -> None:
-    from orchestration.scheduler import run_scheduler_loop
-    console.print("[bold blue]Starting scheduler loop (weekly cadence)...[/]")
-    run_scheduler_loop()
+def _cmd_schedule(once: bool = False) -> None:
+    console.print("[bold blue]Starting scheduler...[/]")
+    if once:
+        from orchestration.scheduler import run_scheduled_cycle
+        run_scheduled_cycle()
+        console.print("[bold green]Scheduler cycle complete.[/]")
+    else:
+        from orchestration.scheduler import run_scheduler_loop
+        console.print("[bold blue]Starting scheduler loop (weekly cadence)...[/]")
+        run_scheduler_loop()
 
 
 def _cmd_check() -> None:
@@ -90,11 +97,27 @@ def _cmd_check() -> None:
 
 
 def _cmd_crew(workspace_id: str) -> None:
-    from orchestration.crew import build_crew
+    import os
+    from orchestration.crew import _get_llm
     console.print(f"[bold blue]Running CrewAI pipeline for: {workspace_id}[/]")
-    crew = build_crew(workspace_id)
-    result = crew.kickoff()
-    console.print(f"[bold green]Crew result:[/] {result}")
+    llm = _get_llm()
+    if not llm:
+        console.print(
+            "[yellow]No LLM API key found.[/] CrewAI agents require an LLM to run tasks.\n"
+            "Set one of these in your [bold].env[/] file:\n"
+            "  [cyan]OPENAI_API_KEY=sk-...[/]\n"
+            "  [cyan]GEMINI_API_KEY=...[/]\n\n"
+            "[dim]The direct pipeline (`python cli.py run`) works without an LLM key.[/dim]"
+        )
+        return
+    try:
+        from orchestration.crew import build_crew
+        crew = build_crew(workspace_id)
+        result = crew.kickoff()
+        console.print(f"[bold green]Crew result:[/] {result}")
+    except Exception as exc:
+        console.print(f"[bold red]Crew error:[/] {exc}")
+        sys.exit(1)
 
 
 if __name__ == "__main__":

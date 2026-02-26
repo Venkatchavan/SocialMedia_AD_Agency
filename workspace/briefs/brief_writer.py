@@ -14,7 +14,7 @@ from core.schemas_brief import (
     RiskCompliance,
     Script,
     ScriptBeat,
-    TestVariant,
+    BriefTestVariant,
 )
 from synthesis.clustering import Cluster
 
@@ -139,10 +139,10 @@ def _generate_scripts(clusters: list[Cluster]) -> list[Script]:
     return scripts
 
 
-def _generate_matrix(clusters: list[Cluster]) -> list[TestVariant]:
-    variants: list[TestVariant] = []
+def _generate_matrix(clusters: list[Cluster]) -> list[BriefTestVariant]:
+    variants: list[BriefTestVariant] = []
     for i, c in enumerate(clusters[:4]):
-        variants.append(TestVariant(
+        variants.append(BriefTestVariant(
             variant=f"V{i+1}",
             hook=c.primary_hook,
             angle=c.messaging_angle,
