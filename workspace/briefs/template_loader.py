@@ -8,7 +8,7 @@ from core.logging import get_logger
 
 _log = get_logger(__name__)
 
-_BRAND_FILE = "BrandBible.md"
+_BRAND_FILE = "Brand_Book.md"
 _BRIEF_FILE = "BriefTemplate.md"
 _COMPLIANCE_FILE = "CompliancePolicy.md"
 _COMPETITORS_FILE = "Competitors.yml"

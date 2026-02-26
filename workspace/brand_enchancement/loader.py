@@ -2,7 +2,7 @@
 
 Load order:
   1. ``clients/<workspace>/BrandBible.json``  (structured, from previous run)
-  2. ``clients/<workspace>/BrandBible.md``    (legacy / hand-written markdown)
+  2. ``clients/<workspace>/Brand_Book.md``    (legacy / hand-written markdown)
   3. Fresh empty BrandBibleDoc               (first-run bootstrap)
 
 No side-effects: loader is read-only; writing is handled by versioning + renderer.
@@ -42,7 +42,7 @@ def load_brand_bible(workspace_id: str) -> BrandBibleDoc:
     """
     client_dir = _clients_dir(workspace_id)
     json_path = client_dir / "BrandBible.json"
-    md_path = client_dir / "BrandBible.md"
+    md_path = client_dir / "Brand_Book.md"
 
     if json_path.exists():
         _log.info("brand_enchancement: loading bible from %s", json_path)

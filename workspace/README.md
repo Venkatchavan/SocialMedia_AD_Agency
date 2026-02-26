@@ -158,7 +158,7 @@ workspace/
 │   └── test_compliance_runtime.py  # Cleanup job, incident handler
 ├── clients/
 │   └── sample_client/
-│       ├── BrandBible.md
+│       ├── Brand_Book.md
 │       ├── BriefTemplate.md
 │       ├── CompliancePolicy.yaml   # Per-client compliance overrides
 │       └── Competitors.yml

@@ -1,7 +1,7 @@
 """brand_enchancement.renderer — Render BrandBibleDoc to human-readable markdown.
 
 Produces a rich, industry-agnostic markdown document at:
-  clients/<workspace>/BrandBible.md
+  clients/<workspace>/Brand_Book.md
 
 The rendered markdown is always re-generated from the structured JSON;
 never edited by hand (hand edits get overwritten on next run).
@@ -39,10 +39,10 @@ def render_markdown(doc: BrandBibleDoc) -> str:
 
 
 def write_brand_markdown(doc: BrandBibleDoc, workspace_id: str) -> Path:
-    """Write the rendered markdown to ``clients/<workspace>/BrandBible.md``."""
+    """Write the rendered markdown to ``clients/<workspace>/Brand_Book.md``."""
     client_dir = _CLIENTS_ROOT / workspace_id
     client_dir.mkdir(parents=True, exist_ok=True)
-    out_path = client_dir / "BrandBible.md"
+    out_path = client_dir / "Brand_Book.md"
     out_path.write_text(render_markdown(doc), encoding="utf-8")
     _log.info("brand_enchancement: wrote markdown → %s", out_path)
     return out_path

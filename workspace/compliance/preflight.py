@@ -15,7 +15,7 @@ from compliance.policy_loader import load_policy, CompliancePolicy
 _log = get_logger(__name__)
 
 _REQUIRED_FILES = {
-    "BrandBible.md": "required_brand_bible → BrandBible.md missing",
+    "Brand_Book.md": "required_brand_bible → Brand_Book.md missing",
     "Competitors.yaml": "required_competitors_file → Competitors.yaml missing (also accepts .yml)",
 }
 _COMPETITORS_ALT = "Competitors.yml"
@@ -62,12 +62,12 @@ def run_preflight(workspace_id: str, *, raise_on_error: bool = True) -> Prefligh
     if not client_dir.is_dir():
         errors.append(f"Workspace directory not found: {client_dir}")
 
-    # ── 2) BrandBible.md ─────────────────────────────────────────────────────
+    # ── 2) Brand_Book.md ─────────────────────────────────────────────────────
     if policy.require_brand_bible:
-        if not (client_dir / "BrandBible.md").exists():
-            alt_paths = ["BrandBible.yaml", "brand_bible.md", "brand_bible.yaml"]
+        if not (client_dir / "Brand_Book.md").exists():
+            alt_paths = ["BrandBible.json", "BrandBible.yaml", "brand_bible.md"]
             if not any((client_dir / p).exists() for p in alt_paths):
-                warnings.append("BrandBible.md not found — brief will use defaults")
+                warnings.append("Brand_Book.md not found — brief will use defaults")
 
     # ── 3) Competitors file ──────────────────────────────────────────────────
     if policy.require_competitors_file:
