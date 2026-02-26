@@ -22,7 +22,8 @@ _log = get_logger(__name__)
 
 
 def _llm_enrich(insights_md: str, brand_bible: str, clusters: list[Cluster]) -> dict:
-    """Generate SMP, background, and RTBs via Gemini (primary) or OpenAI (fallback)."""
+    """Generate SMP, background, and RTBs via whichever LLM provider is available."""
+    from analyzers.llm_router import LLMRouter
     cluster_summary = "; ".join(
         f"{c.primary_hook} x {c.messaging_angle} ({c.count} ads)" for c in clusters[:4]
     )
@@ -38,48 +39,20 @@ def _llm_enrich(insights_md: str, brand_bible: str, clusters: list[Cluster]) -> 
         "RTB2: <reason to believe 2>\n"
         "RTB3: <reason to believe 3>"
     )
-
-    raw = _call_gemini(prompt) or _call_openai(prompt)
-    if not raw:
+    try:
+        raw = LLMRouter().generate(prompt, max_tokens=300)
+        if not raw:
+            return {}
+        result: dict = {}
+        for line in raw.strip().splitlines():
+            if ": " in line:
+                key, _, val = line.partition(": ")
+                result[key.strip()] = val.strip()
+        _log.info("LLM brief enrichment OK")
+        return result
+    except Exception as exc:
+        _log.warning("LLM brief enrichment failed, using template: %s", exc)
         return {}
-    result: dict = {}
-    for line in raw.strip().splitlines():
-        if ": " in line:
-            key, _, val = line.partition(": ")
-            result[key.strip()] = val.strip()
-    _log.info("LLM brief enrichment OK")
-    return result
-
-
-def _call_gemini(prompt: str) -> str | None:
-    try:
-        from analyzers.gemini_client import GeminiClient
-        client = GeminiClient()
-        if not client.is_available():
-            return None
-        return client.generate_text(prompt, max_tokens=300)
-    except Exception as exc:
-        _log.warning("Gemini enrichment failed: %s", exc)
-        return None
-
-
-def _call_openai(prompt: str) -> str | None:
-    try:
-        from core.config import OPENAI_API_KEY
-        if not OPENAI_API_KEY:
-            return None
-        from openai import OpenAI
-        client = OpenAI(api_key=OPENAI_API_KEY)
-        resp = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=300,
-            temperature=0.4,
-        )
-        return resp.choices[0].message.content
-    except Exception as exc:
-        _log.warning("OpenAI enrichment failed: %s", exc)
-        return None
 
 
 def write_brief(

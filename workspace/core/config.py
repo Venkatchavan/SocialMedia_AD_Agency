@@ -40,7 +40,9 @@ LOG_LEVEL: str = _get("LOG_LEVEL", "INFO")
 
 # ── Feature flags ───────────────────────────────────
 USE_VISION_MODEL: bool = bool(GEMINI_API_KEY)
-USE_LLM_BRIEF: bool = bool(GEMINI_API_KEY or OPENAI_API_KEY)
+_any_llm = bool(GEMINI_API_KEY or OPENAI_API_KEY or _get("ANTHROPIC_API_KEY") or _get("MISTRAL_API_KEY"))
+USE_LLM_BRIEF: bool = _any_llm
+LLM_PROVIDER_ORDER: str = _get("LLM_PROVIDER_ORDER", "gemini,openai,anthropic,mistral")
 
 
 def workspace_path(workspace_id: str) -> Path:
