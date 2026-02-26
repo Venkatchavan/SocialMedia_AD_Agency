@@ -24,6 +24,7 @@ DATA_DIR: Path = PROJECT_ROOT / "data"
 # ── API keys ────────────────────────────────────────
 APIFY_TOKEN: str = _get("APIFY_TOKEN")
 GEMINI_API_KEY: str = _get("GEMINI_API_KEY")
+OPENAI_API_KEY: str = _get("OPENAI_API_KEY")
 X_BEARER_TOKEN: str = _get("X_BEARER_TOKEN")
 
 # ── Database ────────────────────────────────────────
@@ -39,7 +40,7 @@ LOG_LEVEL: str = _get("LOG_LEVEL", "INFO")
 
 # ── Feature flags ───────────────────────────────────
 USE_VISION_MODEL: bool = bool(GEMINI_API_KEY)
-USE_LLM_BRIEF: bool = bool(GEMINI_API_KEY)
+USE_LLM_BRIEF: bool = bool(GEMINI_API_KEY or OPENAI_API_KEY)
 
 
 def workspace_path(workspace_id: str) -> Path:
