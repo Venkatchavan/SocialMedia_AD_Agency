@@ -5,16 +5,13 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, patch
-
-import pytest
+from unittest.mock import patch
 
 # Ensure workspace root is on path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from brand_enchancement.schemas import (
     BrandBibleDoc,
-    BrandSummary,
     ChangeRecord,
     UpdateSignal,
 )
