@@ -7,6 +7,7 @@ from core.logging import get_logger
 from core.schemas_brief import (
     Audience,
     BriefObject,
+    BriefTestVariant,
     CreativeDirection,
     Insight,
     Mandatories,
@@ -14,11 +15,45 @@ from core.schemas_brief import (
     RiskCompliance,
     Script,
     ScriptBeat,
-    BriefTestVariant,
 )
 from synthesis.clustering import Cluster
 
 _log = get_logger(__name__)
+
+
+def _llm_enrich(insights_md: str, brand_bible: str, clusters: list[Cluster]) -> dict:
+    """Call Gemini to generate SMP, background summary, and top RTBs."""
+    try:
+        from analyzers.gemini_client import GeminiClient
+        client = GeminiClient()
+        if not client.is_available():
+            return {}
+        cluster_summary = "; ".join(
+            f"{c.primary_hook} x {c.messaging_angle} ({c.count} ads)" for c in clusters[:4]
+        )
+        prompt = (
+            f"You are a senior performance creative strategist.\n"
+            f"Given these winning ad clusters: {cluster_summary}\n"
+            f"Brand context: {brand_bible[:300]}\n"
+            f"Insights: {insights_md[:600]}\n\n"
+            "Return EXACTLY this format (no markdown):\n"
+            "SMP: <one sentence single-minded proposition>\n"
+            "BACKGROUND: <2 sentence brief background>\n"
+            "RTB1: <reason to believe 1>\n"
+            "RTB2: <reason to believe 2>\n"
+            "RTB3: <reason to believe 3>"
+        )
+        raw = client.generate_text(prompt, max_tokens=300)
+        result: dict = {}
+        for line in raw.strip().splitlines():
+            if ": " in line:
+                key, _, val = line.partition(": ")
+                result[key.strip()] = val.strip()
+        _log.info("Gemini LLM brief enrichment OK")
+        return result
+    except Exception as exc:
+        _log.warning("LLM brief enrichment failed, using template: %s", exc)
+        return {}
 
 
 def write_brief(
@@ -29,8 +64,9 @@ def write_brief(
     brand_bible: str,
 ) -> BriefObject:
     """Build a BriefObject deterministically from synthesis outputs."""
+    llm_data: dict = {}
     if USE_LLM_BRIEF:
-        _log.info("LLM brief generation placeholder — using template fill")
+        llm_data = _llm_enrich(insights_md, brand_bible, clusters)
 
     top_clusters = clusters[:4]
     all_asset_ids = []
@@ -45,7 +81,7 @@ def write_brief(
     brief = BriefObject(
         workspace_id=workspace_id,
         run_id=run_id,
-        background=_extract_background(brand_bible, insights_md),
+        background=llm_data.get("BACKGROUND") or _extract_background(brand_bible, insights_md),
         objective_primary="Drive high-intent traffic via performance creative",
         objective_secondary="Build pattern library for scaling winners",
         audience=Audience(
@@ -57,8 +93,8 @@ def write_brief(
             tension="Audience overwhelmed by options; craves social proof",
             why_now="Seasonal demand spike + competitive gap",
         ),
-        smp=_derive_smp(top_clusters),
-        rtbs=_derive_rtbs(top_clusters),
+        smp=llm_data.get("SMP") or _derive_smp(top_clusters),
+        rtbs=[llm_data[k] for k in ("RTB1", "RTB2", "RTB3") if k in llm_data] or _derive_rtbs(top_clusters),
         offer=Offer(type="percent_off", terms="20% off first order", urgency="Limited time"),
         mandatories=Mandatories(
             must_include=["Brand logo", "Legal disclaimer"],
