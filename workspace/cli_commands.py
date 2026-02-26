@@ -180,3 +180,49 @@ def cmd_incident(
     if incident.key_rotation_required:
         console.print("[bold yellow]⚠ Rotate your API keys in .env immediately.[/]")
     console.print(f"[bold green]✓ Incident logged[/] ({len(incident.data_purged)} files purged)")
+
+
+def cmd_enhance_brand(
+    workspace_id: str,
+    keywords_str: str = "",
+    hashtags_str: str = "",
+    extra_context: str = "",
+    run_id: str | None = None,
+    list_versions: bool = False,
+) -> None:
+    from brand_enchancement.engine import update_brand_bible
+    from brand_enchancement.versioning import list_versions as _list_versions
+
+    if list_versions:
+        versions = _list_versions(workspace_id)
+        if not versions:
+            console.print(f"[yellow]No brand bible versions found for workspace: {workspace_id}[/]")
+            return
+        console.print(f"[bold blue]Brand bible versions for: {workspace_id}[/]")
+        for v in versions:
+            console.print(
+                f"  [cyan]v{v['version']}[/] | run={v['run_id'][:20]} | {v['updated_at'][:16]}"
+            )
+        return
+
+    keywords = [k.strip() for k in keywords_str.split(",") if k.strip()]
+    hashtags = [h.strip() for h in hashtags_str.split(",") if h.strip()]
+
+    console.print(
+        f"[bold blue]Enhancing brand bible[/] workspace=[cyan]{workspace_id}[/] "
+        f"kw={keywords} ht={hashtags}"
+    )
+    try:
+        result = update_brand_bible(
+            workspace_id=workspace_id,
+            keywords=keywords,
+            hashtags=hashtags,
+            extra_context=extra_context,
+            run_id=run_id,
+        )
+        console.print(f"[bold green]✓ Brand bible updated → v{result.version}[/]")
+        for line in result.report.splitlines()[1:]:
+            console.print(f"  [dim]{line}[/dim]")
+    except Exception as exc:
+        console.print(f"[bold red]✗ Brand enhancement failed:[/] {exc}")
+        sys.exit(1)

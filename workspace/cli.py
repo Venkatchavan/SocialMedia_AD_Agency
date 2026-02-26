@@ -50,6 +50,17 @@ def main() -> None:
     clean_p.add_argument("--workspace", "-w", default=None)
     clean_p.add_argument("--dry-run", action="store_true")
 
+    # enhance-brand
+    enh_p = sub.add_parser("enhance-brand", help="Update brand bible with new keywords/hashtags")
+    enh_p.add_argument("--workspace", "-w", default="sample_client")
+    enh_p.add_argument("--keywords", default="", help="Comma-separated keywords")
+    enh_p.add_argument("--hashtags", default="", help="Comma-separated hashtags")
+    enh_p.add_argument("--context", default="", help="Optional free-text context for this run")
+    enh_p.add_argument("--run-id", default="", help="Optional explicit run ID")
+    enh_p.add_argument(
+        "--list-versions", action="store_true", help="List all saved brand bible versions"
+    )
+
     # incident
     inc_p = sub.add_parser("incident", help="Trigger incident response for a run")
     inc_p.add_argument("--workspace", "-w", required=True)
@@ -64,7 +75,8 @@ def main() -> None:
     args = parser.parse_args()
     from cli_commands import (
         cmd_check, cmd_cleanup, cmd_collect, cmd_crew,
-        cmd_incident, cmd_preflight, cmd_run, cmd_schedule,
+        cmd_enhance_brand, cmd_incident, cmd_preflight,
+        cmd_run, cmd_schedule,
     )
 
     if args.command == "run":
@@ -85,6 +97,15 @@ def main() -> None:
     elif args.command == "incident":
         cmd_incident(args.workspace, args.run_id, args.type,
                      args.description, args.rotate_keys)
+    elif args.command == "enhance-brand":
+        cmd_enhance_brand(
+            workspace_id=args.workspace,
+            keywords_str=args.keywords,
+            hashtags_str=args.hashtags,
+            extra_context=args.context,
+            run_id=args.run_id or None,
+            list_versions=args.list_versions,
+        )
     else:
         parser.print_help()
 
