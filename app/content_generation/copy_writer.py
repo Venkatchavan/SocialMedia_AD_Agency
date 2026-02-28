@@ -7,7 +7,6 @@ Uses existing LLM Router pattern — no direct LLM calls in this module.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
 
 import structlog
 

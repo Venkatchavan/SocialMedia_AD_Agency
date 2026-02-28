@@ -8,8 +8,6 @@ SECURITY (from Agents_Security.md):
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
-from typing import Optional
-from urllib.parse import urlencode
 
 import structlog
 

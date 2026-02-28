@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-from sqlalchemy import Column, String
 
 from app.core.multi_tenancy import (
     TenantContext,
@@ -11,7 +10,7 @@ from app.core.multi_tenancy import (
     storage_path,
     validate_workspace_access,
 )
-from app.db.base import Base, generate_uuid
+from app.db.base import Base
 from app.db.engine import build_engine, build_session_factory, get_session
 from app.db.models import AuditEventModel
 

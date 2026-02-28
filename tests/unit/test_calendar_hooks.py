@@ -2,13 +2,9 @@
 
 from __future__ import annotations
 
-import pytest
 
 from app.content_generation.calendar_planner import (
     CalendarPlanner,
-    GrowthCalendar,
-    CalendarEntry,
-    WeekPlan,
 )
 from app.content_generation.trend_hooks import (
     TrendHookGenerator,

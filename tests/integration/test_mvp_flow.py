@@ -7,7 +7,6 @@ import pytest
 from app.services.audit_logger import AuditLogger
 from app.services.content_hasher import ContentHasher
 from app.services.rights_engine import RightsEngine
-from app.services.risk_scorer import RiskScorer
 from app.services.qa_checker import QAChecker
 
 from app.agents.product_intake import ProductIntakeAgent
@@ -27,7 +26,7 @@ class TestMVPPipeline:
     def pipeline(self) -> ContentPipelineFlow:
         """Build a complete pipeline for testing."""
         audit = AuditLogger()
-        hasher = ContentHasher()
+        ContentHasher()
         rights = RightsEngine(audit_logger=audit)
         qa = QAChecker(audit_logger=audit)
 

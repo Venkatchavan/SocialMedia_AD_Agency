@@ -6,7 +6,6 @@ Never uses browser automation or scraping.
 
 from __future__ import annotations
 
-from typing import Any
 
 import structlog
 
@@ -33,7 +32,7 @@ class TikTokAdapter(BasePlatformAdapter):
         caption = package.get("caption", "")
         media_url = package.get("media_url", "")
 
-        credentials = self._get_credentials()
+        self._get_credentials()
         # credentials contains: TIKTOK_CLIENT_KEY, TIKTOK_CLIENT_SECRET, TIKTOK_ACCESS_TOKEN
 
         logger.info(

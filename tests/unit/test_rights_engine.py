@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-import pytest
 from app.services.rights_engine import RightsEngine
-from app.services.audit_logger import AuditLogger
 
 
 class TestRightsEngine:

@@ -16,7 +16,7 @@ from typing import Any
 import structlog
 
 from app.agents.base_agent import BaseAgent
-from app.schemas.content import ContentBrief, Script, ScriptScene
+from app.schemas.content import Script, ScriptScene
 from app.services.audit_logger import AuditLogger
 from app.services.content_hasher import ContentHasher
 

@@ -38,7 +38,7 @@ class AmazonAdapter:
 
         Returns dict with product data.
         """
-        credentials = self._secrets.get_platform_credentials("amazon")
+        self._secrets.get_platform_credentials("amazon")
         # credentials: AMAZON_ACCESS_KEY, AMAZON_SECRET_KEY, AMAZON_PARTNER_TAG
 
         logger.info("amazon_lookup", asin=asin)

@@ -5,17 +5,13 @@ from __future__ import annotations
 import pytest
 
 from app.analytics import (
-    MetricInterval,
     MetricsPuller,
-    PLATFORM_METRICS,
     PostMetrics,
 )
 from app.analytics.performance_learner import (
     LearningEvent,
     PatternScore,
     PerformanceLearner,
-    PENALIZE_DELTA,
-    REINFORCE_DELTA,
 )
 from app.analytics.chat_engine import (
     AnalyticsChatEngine,

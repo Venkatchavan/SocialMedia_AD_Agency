@@ -6,7 +6,6 @@ Never uses browser automation or scraping.
 
 from __future__ import annotations
 
-from typing import Any
 
 import structlog
 
@@ -32,7 +31,7 @@ class XAdapter(BasePlatformAdapter):
         caption = package.get("caption", "")
         media_url = package.get("media_url", "")
 
-        credentials = self._get_credentials()
+        self._get_credentials()
 
         logger.info(
             "x_publish_initiated",

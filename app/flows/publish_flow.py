@@ -9,9 +9,7 @@ Enforces:
 
 from __future__ import annotations
 
-import uuid
-from datetime import datetime, timezone
-from typing import Any, Optional, Protocol
+from typing import Protocol
 
 import structlog
 
@@ -71,7 +69,7 @@ class PublishFlow:
         results: list[dict] = []
 
         for package in platform_packages:
-            platform = package.get("platform", "")
+            package.get("platform", "")
             result = self.publish_one(package, session_id)
             results.append(result)
 
@@ -113,7 +111,7 @@ class PublishFlow:
             return {
                 "platform": platform,
                 "status": "queued",
-                "reason": f"Circuit breaker open — will retry after recovery",
+                "reason": "Circuit breaker open — will retry after recovery",
             }
 
         # 3. Rate limit check

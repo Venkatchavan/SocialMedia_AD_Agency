@@ -7,7 +7,6 @@ These rules are NON-NEGOTIABLE and must be checked before any agent action.
 from __future__ import annotations
 
 import re
-from typing import Optional
 
 import structlog
 

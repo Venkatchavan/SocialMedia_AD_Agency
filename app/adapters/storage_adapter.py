@@ -6,7 +6,6 @@ All URLs are signed and time-limited (Agents_Security.md).
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from typing import Any
 
 import structlog

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
 from app.analyzers.seo_auditor import SEOAuditor, SEOAuditResult, SEOCheck
 
 

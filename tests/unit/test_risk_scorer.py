@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-import pytest
 from app.services.risk_scorer import RiskScorer
 from app.schemas.reference import Reference
 from app.schemas.rights import RightsDecision
@@ -50,7 +49,7 @@ class TestRiskScorer:
         decision = _make_decision("APPROVE", 10)
         scored = risk_scorer.score(ref, decision)
         # Without a registry entry, unknown reference adds risk
-        # Score = 10 (base) + 30 (unknown) = 40, so it flags for human review 
+        # Score = 10 (base) + 30 (unknown) = 40, so it flags for human review
         assert scored.final_risk_score <= 70  # Not auto-blocked
 
     def test_high_risk_score_auto_blocks(self, risk_scorer: RiskScorer):

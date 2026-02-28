@@ -116,7 +116,7 @@ def add_disclosure(caption: str, platform: str) -> str:
     if is_valid:
         return caption
 
-    rules = PLATFORM_DISCLOSURE_RULES.get(platform, {})
+    PLATFORM_DISCLOSURE_RULES.get(platform, {})
     default_disclosure = "\n\n#ad #affiliate — This post contains affiliate links. I may earn a commission at no extra cost to you."
 
     if platform == "x":

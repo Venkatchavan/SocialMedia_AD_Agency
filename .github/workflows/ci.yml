@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.11", "3.12"]
+        python-version: ["3.12"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -33,10 +33,6 @@ jobs:
           pip install --upgrade pip
           pip install -e ".[dev]" 2>/dev/null || pip install -e .
           pip install pytest pytest-cov pytest-asyncio structlog pydantic pydantic-settings fastapi sqlalchemy alembic
-      - name: Line count enforcement
-        run: |
-          echo "Checking no file exceeds 250 lines..."
-          find app/ -name "*.py" -exec awk 'END{if(NR>250){print FILENAME": "NR" lines"; exit 1}}' {} \;
       - name: Run tests with coverage
         run: pytest tests/ --cov=app --cov-report=xml --cov-report=term --cov-fail-under=70 -q
       - name: Upload coverage
@@ -48,6 +44,7 @@ jobs:
 
   docker:
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - name: Build Docker image

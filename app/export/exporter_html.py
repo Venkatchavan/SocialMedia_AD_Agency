@@ -46,7 +46,7 @@ class HtmlExporter(BaseExporter):
         parts: list[str] = []
 
         title = _esc(self._safe_get(brief_data, "title", "Creative Brief"))
-        parts.append(f"<!DOCTYPE html><html><head><meta charset='utf-8'>")
+        parts.append("<!DOCTYPE html><html><head><meta charset='utf-8'>")
         parts.append(f"<title>{title}</title><style>{_CSS}</style></head><body>")
         parts.append(f"<h1>{title}</h1>")
 

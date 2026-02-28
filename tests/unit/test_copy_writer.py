@@ -8,7 +8,6 @@ from app.content_generation.copy_writer import (
     CopyWriter,
     GeneratedCaption,
     PLATFORM_SPECS,
-    PlatformCaptionSpec,
 )
 from app.policies.agent_constitution import ConstitutionViolation
 

@@ -3,7 +3,12 @@ FROM python:3.12-slim AS builder
 
 WORKDIR /build
 
-# Install build deps
+# Install build dependencies for compiled packages
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN pip install --no-cache-dir hatchling
 
 COPY pyproject.toml ./

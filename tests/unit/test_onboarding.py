@@ -4,10 +4,9 @@ from __future__ import annotations
 
 import pytest
 
-from app.onboarding.url_scanner import URLScanner, BrandProfile
+from app.onboarding.url_scanner import URLScanner
 from app.onboarding.onboarding_flow import (
     OnboardingOrchestrator,
-    OnboardingState,
     OnboardingStep,
     STEP_ORDER,
 )

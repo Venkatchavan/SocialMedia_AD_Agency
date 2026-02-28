@@ -2,11 +2,9 @@
 
 from __future__ import annotations
 
-import os
 
-import pytest
 
-from app.collectors.base_collector import CollectedAd, BaseCollector
+from app.collectors.base_collector import CollectedAd
 from app.collectors.youtube_collector import YouTubeCollector, _parse_datetime
 from app.collectors.linkedin_collector import (
     LinkedInCollector,

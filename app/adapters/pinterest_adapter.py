@@ -6,7 +6,6 @@ Never uses browser automation or scraping.
 
 from __future__ import annotations
 
-from typing import Any
 
 import structlog
 
@@ -31,7 +30,7 @@ class PinterestAdapter(BasePlatformAdapter):
         caption = package.get("caption", "")
         media_url = package.get("media_url", "")
 
-        credentials = self._get_credentials()
+        self._get_credentials()
 
         logger.info(
             "pinterest_publish_initiated",

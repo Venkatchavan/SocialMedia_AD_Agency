@@ -13,7 +13,7 @@ from typing import Any
 
 import structlog
 
-from app.schemas.analytics import Experiment, ExperimentVariant, ExperimentResult
+from app.schemas.analytics import Experiment, ExperimentVariant
 from app.services.audit_logger import AuditLogger
 
 logger = structlog.get_logger(__name__)

@@ -6,7 +6,7 @@ Removes all default branding in client-facing views and exports.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 import structlog
@@ -89,12 +89,12 @@ class WhiteLabelRegistry:
         """Generate CSS overrides for the dashboard."""
         config = self.get_config(workspace_id)
         parts = [
-            f":root {{",
+            ":root {",
             f"  --primary: {config.primary_color};",
             f"  --secondary: {config.secondary_color};",
             f"  --accent: {config.accent_color};",
             f"  --font: {config.font_family};",
-            f"}}",
+            "}",
         ]
         if config.custom_css:
             parts.append(config.custom_css)

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
 from app.policies.disclosure_rules import (
     validate_disclosure,
     add_disclosure,

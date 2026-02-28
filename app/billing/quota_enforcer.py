@@ -6,7 +6,6 @@ Called before every pipeline run and publish action.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
 
 import structlog
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from app.db.vector_store import VectorStore, VectorDocument, SearchResult
+from app.db.vector_store import VectorStore, VectorDocument
 
 
 @pytest.fixture

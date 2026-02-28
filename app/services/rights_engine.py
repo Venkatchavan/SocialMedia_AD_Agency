@@ -19,7 +19,7 @@ from typing import Optional
 
 import structlog
 
-from app.schemas.reference import Reference, ReferenceBundle, ScoredReference
+from app.schemas.reference import Reference, ReferenceBundle
 from app.schemas.rights import RightsDecision, RightsRecord
 from app.services.audit_logger import AuditLogger
 

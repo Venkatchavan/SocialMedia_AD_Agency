@@ -6,7 +6,6 @@ Never uses browser automation or scraping.
 
 from __future__ import annotations
 
-from typing import Any
 
 import structlog
 
@@ -33,7 +32,7 @@ class InstagramAdapter(BasePlatformAdapter):
         media_url = package.get("media_url", "")
         content_type = package.get("content_type", "reel")  # reel, image, carousel
 
-        credentials = self._get_credentials()
+        self._get_credentials()
 
         logger.info(
             "instagram_publish_initiated",

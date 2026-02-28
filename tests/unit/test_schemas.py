@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 from datetime import datetime, timezone
 
-from app.schemas.product import ProductRecord, EnrichedProduct
+from app.schemas.product import ProductRecord
 from app.schemas.reference import Reference, ReferenceBundle
 from app.schemas.audit import AuditEvent
 from app.schemas.content import CaptionBundle

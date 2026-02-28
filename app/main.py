@@ -7,7 +7,6 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import sys
 from typing import Any
 
 import structlog
@@ -19,8 +18,6 @@ from app.services.risk_scorer import RiskScorer
 from app.services.qa_checker import QAChecker
 from app.services.content_hasher import ContentHasher
 from app.services.secrets import SecretsManager
-from app.services.incident_manager import IncidentManager
-from app.services.media_signer import MediaSigner
 
 from app.agents.product_intake import ProductIntakeAgent
 from app.agents.product_enrichment import ProductEnrichmentAgent
@@ -40,10 +37,10 @@ def build_pipeline() -> ContentPipelineFlow:
 
     # Core services
     audit_logger = AuditLogger()
-    secrets = SecretsManager(backend=settings.secrets_backend)
-    content_hasher = ContentHasher()
+    SecretsManager(backend=settings.secrets_backend)
+    ContentHasher()
     rights_engine = RightsEngine(audit_logger=audit_logger)
-    risk_scorer = RiskScorer()
+    RiskScorer()
     qa_checker = QAChecker(audit_logger=audit_logger)
 
     # Agents
