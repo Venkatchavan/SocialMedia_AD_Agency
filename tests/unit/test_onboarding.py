@@ -4,13 +4,12 @@ from __future__ import annotations
 
 import pytest
 
-from app.onboarding.url_scanner import URLScanner
 from app.onboarding.onboarding_flow import (
+    STEP_ORDER,
     OnboardingOrchestrator,
     OnboardingStep,
-    STEP_ORDER,
 )
-
+from app.onboarding.url_scanner import URLScanner
 
 # ── URLScanner ───────────────────────────────────────────────────────
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pytest
+
 from app.policies.agent_constitution import AgentConstitution, ConstitutionViolation
 
 

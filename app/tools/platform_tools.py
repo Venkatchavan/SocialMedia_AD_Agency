@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-
 from app.policies.platform_policies import PLATFORM_SPECS, validate_media_for_platform
 
 

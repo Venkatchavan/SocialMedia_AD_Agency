@@ -6,7 +6,6 @@ Never uses browser automation or scraping.
 
 from __future__ import annotations
 
-
 import structlog
 
 from app.adapters.base_adapter import BasePlatformAdapter

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import logging
 
-
 from app.core.logging import get_logger, setup_logging
 
 

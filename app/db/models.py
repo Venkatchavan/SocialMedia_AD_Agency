@@ -105,4 +105,6 @@ class AuditEventModel(Base, WorkspaceMixin):
     output_hash = Column(String(128), nullable=True)
     decision = Column(String(64), nullable=True)
     reason = Column(Text, nullable=True)
+    session_id = Column(String(128), nullable=True, index=True)
+    previous_event_hash = Column(String(128), nullable=True)
     timestamp = Column(String(64), nullable=False)

@@ -4,19 +4,17 @@ from __future__ import annotations
 
 import pytest
 
-from app.services.audit_logger import AuditLogger
-from app.services.content_hasher import ContentHasher
-from app.services.rights_engine import RightsEngine
-from app.services.qa_checker import QAChecker
-
-from app.agents.product_intake import ProductIntakeAgent
-from app.agents.product_enrichment import ProductEnrichmentAgent
-from app.agents.reference_intelligence import ReferenceIntelligenceAgent
-from app.agents.scriptwriter import ScriptwriterAgent
 from app.agents.caption_seo import CaptionSEOAgent
 from app.agents.orchestrator import OrchestratorAgent
-
+from app.agents.product_enrichment import ProductEnrichmentAgent
+from app.agents.product_intake import ProductIntakeAgent
+from app.agents.reference_intelligence import ReferenceIntelligenceAgent
+from app.agents.scriptwriter import ScriptwriterAgent
 from app.flows.content_pipeline import ContentPipelineFlow, PipelineState, PipelineStatus
+from app.services.audit_logger import AuditLogger
+from app.services.content_hasher import ContentHasher
+from app.services.qa_checker import QAChecker
+from app.services.rights_engine import RightsEngine
 
 
 class TestMVPPipeline:

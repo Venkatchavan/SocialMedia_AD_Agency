@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from app.policies.disclosure_rules import (
-    validate_disclosure,
-    add_disclosure,
     PLATFORM_DISCLOSURE_RULES,
+    add_disclosure,
+    validate_disclosure,
 )
 
 

@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
-
 from fastapi import APIRouter, HTTPException, status
+from pydantic import BaseModel, Field
 
 from app.core.auth import PasswordHasher, Role, TokenManager
 

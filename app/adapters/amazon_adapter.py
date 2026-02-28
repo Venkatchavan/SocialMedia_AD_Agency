@@ -10,8 +10,8 @@ from typing import Any
 
 import structlog
 
-from app.services.secrets import SecretsManager
 from app.services.audit_logger import AuditLogger
+from app.services.secrets import SecretsManager
 
 logger = structlog.get_logger(__name__)
 

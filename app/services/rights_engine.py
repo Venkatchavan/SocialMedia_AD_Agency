@@ -14,8 +14,7 @@ Security rules enforced (from Agents.md):
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
 
 import structlog
 
@@ -48,7 +47,7 @@ class RightsEngine:
     def __init__(
         self,
         audit_logger: AuditLogger,
-        registry: Optional[dict[str, RightsRecord]] = None,
+        registry: dict[str, RightsRecord] | None = None,
     ) -> None:
         self._audit = audit_logger
         self._registry: dict[str, RightsRecord] = registry or {}
@@ -96,7 +95,7 @@ class RightsEngine:
 
         # Set audit ID
         decision.audit_id = str(uuid.uuid4())
-        decision.timestamp = datetime.now(tz=timezone.utc)
+        decision.timestamp = datetime.now(tz=UTC)
 
         # Log audit event (MANDATORY — never skip)
         self._audit.log(
@@ -128,7 +127,7 @@ class RightsEngine:
         return decision
 
     def _check_licensed(
-        self, ref: Reference, record: Optional[RightsRecord]
+        self, ref: Reference, record: RightsRecord | None
     ) -> RightsDecision:
         """Check licensed_direct: requires active license with commercial+social scope."""
         base = {
@@ -153,7 +152,7 @@ class RightsEngine:
                 risk_score=90,
             )
 
-        if record.license_expiry and record.license_expiry < datetime.now(tz=timezone.utc):
+        if record.license_expiry and record.license_expiry < datetime.now(tz=UTC):
             return RightsDecision(
                 **base,
                 decision="REJECT",
@@ -193,7 +192,7 @@ class RightsEngine:
         )
 
     def _check_public_domain(
-        self, ref: Reference, record: Optional[RightsRecord]
+        self, ref: Reference, record: RightsRecord | None
     ) -> RightsDecision:
         """Check public_domain: must be confirmed public domain."""
         base = {
@@ -229,7 +228,7 @@ class RightsEngine:
         )
 
     def _check_style_only(
-        self, ref: Reference, record: Optional[RightsRecord]
+        self, ref: Reference, record: RightsRecord | None
     ) -> RightsDecision:
         """Check style_only: must not include specific IP elements."""
         base = {
@@ -270,7 +269,7 @@ class RightsEngine:
         )
 
     def _check_commentary(
-        self, ref: Reference, record: Optional[RightsRecord]
+        self, ref: Reference, record: RightsRecord | None
     ) -> RightsDecision:
         """Check commentary: must be genuine commentary, not promotional impersonation."""
         base = {
@@ -336,7 +335,7 @@ class RightsEngine:
     @staticmethod
     def _dict_to_reference(data: dict) -> Reference:
         """Convert a dict to a Reference, filling defaults for missing fields."""
-        from datetime import datetime, timezone
+        from datetime import datetime
 
         defaults = {
             "reference_id": data.get("reference_id", "unknown"),
@@ -347,8 +346,8 @@ class RightsEngine:
             "risk_score": data.get("risk_score", 50),
             "audience_overlap_score": data.get("audience_overlap_score", 0.0),
             "trending_relevance": data.get("trending_relevance", 0.0),
-            "created_at": datetime.now(tz=timezone.utc),
-            "updated_at": datetime.now(tz=timezone.utc),
+            "created_at": datetime.now(tz=UTC),
+            "updated_at": datetime.now(tz=UTC),
         }
         if "license_id" in data:
             defaults["source_metadata"] = {"license_id": data["license_id"]}

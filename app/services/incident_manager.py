@@ -6,8 +6,7 @@ Handles creation, tracking, and alerting for security and compliance incidents.
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
 
 import structlog
 
@@ -29,8 +28,8 @@ class IncidentManager:
         incident_type: str,
         description: str,
         severity: str = "medium",
-        affected_posts: Optional[list[str]] = None,
-        affected_platforms: Optional[list[str]] = None,
+        affected_posts: list[str] | None = None,
+        affected_platforms: list[str] | None = None,
         created_by: str = "system",
     ) -> Incident:
         """Create a new incident and log it.
@@ -54,7 +53,7 @@ class IncidentManager:
             affected_posts=affected_posts or [],
             affected_platforms=affected_platforms or [],
             status="open",
-            created_at=datetime.now(tz=timezone.utc),
+            created_at=datetime.now(tz=UTC),
             created_by=created_by,
         )
 
@@ -85,13 +84,13 @@ class IncidentManager:
 
     def resolve_incident(
         self, incident_id: str, resolution: str, resolved_by: str = "system"
-    ) -> Optional[Incident]:
+    ) -> Incident | None:
         """Resolve an open incident."""
         for incident in self._incidents:
             if incident.id == incident_id and incident.status == "open":
                 incident.status = "resolved"
                 incident.resolution = resolution
-                incident.resolved_at = datetime.now(tz=timezone.utc)
+                incident.resolved_at = datetime.now(tz=UTC)
 
                 self._audit.log(
                     agent_id="incident_manager",

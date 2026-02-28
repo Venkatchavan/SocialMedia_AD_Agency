@@ -10,10 +10,9 @@ Checks brand visibility on:
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from datetime import datetime
-
-import re
 
 import structlog
 
@@ -101,12 +100,7 @@ class SEOAuditor:
         title = match.group(1).strip()
         checks.append(SEOCheck(name="title_present", passed=True, value=title))
 
-        if len(title) < 30:
-            checks.append(SEOCheck(
-                name="title_length", passed=False, value=f"{len(title)} chars",
-                recommendation="Title should be 30-60 characters", severity="warning",
-            ))
-        elif len(title) > 60:
+        if len(title) < 30 or len(title) > 60:
             checks.append(SEOCheck(
                 name="title_length", passed=False, value=f"{len(title)} chars",
                 recommendation="Title should be 30-60 characters", severity="warning",

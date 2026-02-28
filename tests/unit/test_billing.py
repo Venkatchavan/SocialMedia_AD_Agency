@@ -4,10 +4,9 @@ from __future__ import annotations
 
 import pytest
 
-from app.billing import PlanTier, PLANS, UsageCounter
+from app.billing import PLANS, PlanTier, UsageCounter
 from app.billing.quota_enforcer import QuotaEnforcer
-from app.billing.stripe_client import StripeClient, CheckoutSession
-
+from app.billing.stripe_client import CheckoutSession, StripeClient
 
 # ── Plan definitions ─────────────────────────────────────────────────
 

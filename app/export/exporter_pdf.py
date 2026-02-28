@@ -44,7 +44,7 @@ class PdfExporter(BaseExporter):
         # Convert HTML → PDF
         pdf_path = self._ensure_dir(f"{output_path}.pdf")
         try:
-            html_content = open(html_result.output_path, "r", encoding="utf-8").read()
+            html_content = open(html_result.output_path, encoding="utf-8").read()
             WeasyprintHTML(string=html_content).write_pdf(str(pdf_path))
 
             file_size = pdf_path.stat().st_size

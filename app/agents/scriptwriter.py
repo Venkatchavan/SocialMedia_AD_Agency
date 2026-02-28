@@ -6,86 +6,40 @@ Rules enforced:
 - Must include {{AFFILIATE_DISCLOSURE}} placeholder.
 - Anti-repetition via content hashing.
 """
-
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 import structlog
 
 from app.agents.base_agent import BaseAgent
+from app.agents.script_templates import SCRIPT_TEMPLATES, build_template_scenes
 from app.schemas.content import Script, ScriptScene
 from app.services.audit_logger import AuditLogger
 from app.services.content_hasher import ContentHasher
+from app.services.llm_client import LLMClient
 
 logger = structlog.get_logger(__name__)
-
-
-# Script templates by content angle
-SCRIPT_TEMPLATES: dict[str, dict] = {
-    "comparison": {
-        "hook_templates": [
-            "Everyone says {product_a} is the best, but wait till you see this...",
-            "{product_a} vs the alternative — here's what nobody tells you",
-        ],
-        "scene_count": 4,
-        "duration_target": 30,
-    },
-    "top_3": {
-        "hook_templates": [
-            "3 things I wish I knew before buying {category}...",
-            "Stop scrolling — here are the top 3 {category} picks",
-        ],
-        "scene_count": 5,
-        "duration_target": 45,
-    },
-    "story": {
-        "hook_templates": [
-            "I was about to give up on {use_case} until I found this...",
-            "This changed everything about my {use_case} routine",
-        ],
-        "scene_count": 4,
-        "duration_target": 45,
-    },
-    "problem_solution": {
-        "hook_templates": [
-            "Struggling with {problem}? Here's what actually works.",
-            "If {problem} is ruining your day, you need to see this",
-        ],
-        "scene_count": 4,
-        "duration_target": 30,
-    },
-    "aesthetic": {
-        "hook_templates": [
-            "POV: Your {use_case} setup hits different ✨",
-            "The aesthetic {use_case} setup you didn't know you needed",
-        ],
-        "scene_count": 3,
-        "duration_target": 20,
-    },
-    "meme_style": {
-        "hook_templates": [
-            "Me pretending I don't need {product} vs. me at 3am adding it to cart",
-            "Nobody: ... Me: *adds {product} to cart for the 5th time*",
-        ],
-        "scene_count": 3,
-        "duration_target": 15,
-    },
-}
 
 
 class ScriptwriterAgent(BaseAgent):
     """Write short-form video scripts based on content briefs."""
 
-    def __init__(self, audit_logger: AuditLogger, session_id: str = "") -> None:
+    def __init__(
+        self,
+        audit_logger: AuditLogger,
+        llm_client: LLMClient | None = None,
+        session_id: str = "",
+    ) -> None:
         super().__init__(
             agent_id="scriptwriter",
             audit_logger=audit_logger,
             session_id=session_id,
         )
         self._hasher = ContentHasher()
+        self._llm = llm_client or LLMClient()
 
     def execute(self, inputs: dict[str, Any]) -> dict[str, Any]:
         """Generate a script from a content brief.
@@ -136,7 +90,7 @@ class ScriptwriterAgent(BaseAgent):
             content_hash=content_hash,
             version=1,
             status="draft",
-            created_at=datetime.now(tz=timezone.utc),
+            created_at=datetime.now(tz=UTC),
         )
 
         logger.info(
@@ -156,7 +110,11 @@ class ScriptwriterAgent(BaseAgent):
         category: str,
         use_cases: list[str],
     ) -> str:
-        """Generate the hook (first 3 seconds)."""
+        """Generate the hook (first 3 seconds). Uses LLM if available."""
+        if not self._llm.is_dry_run:
+            return self._llm_generate_hook(product_title, category, use_cases)
+
+        # Template fallback
         hook_templates = template.get("hook_templates", [])
         if not hook_templates:
             return f"Check out this amazing {category} find!"
@@ -167,8 +125,33 @@ class ScriptwriterAgent(BaseAgent):
         hook = hook.replace("{category}", category)
         hook = hook.replace("{use_case}", use_cases[0] if use_cases else "daily routine")
         hook = hook.replace("{problem}", f"finding the right {category}")
-
         return hook
+
+    def _llm_generate_hook(
+        self, product_title: str, category: str, use_cases: list[str],
+    ) -> str:
+        """Generate a hook using the LLM."""
+        system = (
+            "You write viral short-form video hooks (3 seconds max). "
+            "Return ONLY the hook text, no quotes, no JSON."
+        )
+        user = (
+            f"Product: {product_title}\nCategory: {category}\n"
+            f"Use cases: {', '.join(use_cases)}\n"
+            "Write one punchy, scroll-stopping hook."
+        )
+        try:
+            hook = self._llm.complete(
+                system_prompt=system,
+                user_prompt=user,
+                agent_id="scriptwriter",
+                temperature=0.8,
+                max_tokens=100,
+            )
+            return hook.strip().strip('"')
+        except Exception:
+            logger.warning("llm_hook_fallback", product=product_title)
+            return f"Stop scrolling — you need to see this {category}!"
 
     def _generate_scenes(
         self,
@@ -178,79 +161,62 @@ class ScriptwriterAgent(BaseAgent):
         use_cases: list[str],
         reference_style: str,
     ) -> list[ScriptScene]:
-        """Generate body scenes."""
+        """Generate body scenes. Uses LLM if available."""
+        if not self._llm.is_dry_run:
+            return self._llm_generate_scenes(
+                angle, template, product_title, use_cases, reference_style,
+            )
+
+        return self._template_scenes(
+            angle, template, product_title, use_cases, reference_style,
+        )
+
+    def _template_scenes(
+        self, angle: str, template: dict, product_title: str,
+        use_cases: list[str], reference_style: str,
+    ) -> list[ScriptScene]:
+        """Delegate to extracted template scene builder."""
+        return build_template_scenes(angle, template, product_title, use_cases, reference_style)
+
+    def _llm_generate_scenes(
+        self,
+        angle: str,
+        template: dict,
+        product_title: str,
+        use_cases: list[str],
+        reference_style: str,
+    ) -> list[ScriptScene]:
+        """Generate scenes using the LLM."""
         scene_count = template.get("scene_count", 3)
-        scenes: list[ScriptScene] = []
-
-        if angle == "problem_solution":
-            scenes = [
-                ScriptScene(
-                    scene_number=1,
-                    scene_type="problem",
-                    dialogue=f"Finding the right {product_title} can be overwhelming.",
-                    visual_direction=f"Show frustration scene. {reference_style}" if reference_style else "Show frustration with alternatives",
-                    duration_seconds=5,
-                ),
-                ScriptScene(
-                    scene_number=2,
-                    scene_type="solution_reveal",
-                    dialogue=f"That's why {product_title} stands out from the rest.",
-                    visual_direction=f"Product reveal shot. {reference_style}" if reference_style else "Clean product reveal",
-                    duration_seconds=5,
-                ),
-                ScriptScene(
-                    scene_number=3,
-                    scene_type="demo",
-                    dialogue=f"Perfect for {', '.join(use_cases[:2])}.",
-                    visual_direction="Lifestyle usage demonstration",
-                    duration_seconds=8,
-                ),
-                ScriptScene(
-                    scene_number=4,
-                    scene_type="social_proof",
-                    dialogue="See why people are switching.",
-                    visual_direction="Show product features and benefits",
-                    duration_seconds=5,
-                ),
-            ]
-        elif angle == "aesthetic":
-            scenes = [
-                ScriptScene(
-                    scene_number=1,
-                    scene_type="aesthetic_showcase",
-                    dialogue="",
-                    visual_direction=f"Cinematic product shot. {reference_style}" if reference_style else "Beautiful flat lay arrangement",
-                    duration_seconds=6,
-                ),
-                ScriptScene(
-                    scene_number=2,
-                    scene_type="lifestyle",
-                    dialogue=f"Elevate your {use_cases[0] if use_cases else 'daily'} setup.",
-                    visual_direction=f"Lifestyle scene. {reference_style}" if reference_style else "Person using product in stylish environment",
-                    duration_seconds=7,
-                ),
-                ScriptScene(
-                    scene_number=3,
-                    scene_type="detail",
-                    dialogue="The details make the difference.",
-                    visual_direction="Close-up product details",
-                    duration_seconds=5,
-                ),
-            ]
-        else:
-            # Generic scenes
-            for i in range(min(scene_count, 4)):
-                scenes.append(
-                    ScriptScene(
-                        scene_number=i + 1,
-                        scene_type="body",
-                        dialogue=f"Feature {i + 1} of {product_title}.",
-                        visual_direction=f"Demonstrate feature {i + 1}",
-                        duration_seconds=5,
-                    )
-                )
-
-        return scenes[:scene_count]
+        system = (
+            "You write short-form video scene breakdowns. "
+            "Return a JSON array of objects with keys: "
+            "scene_number, scene_type, dialogue, visual_direction, "
+            "duration_seconds. Never include health/medical claims."
+        )
+        user = (
+            f"Product: {product_title}\nAngle: {angle}\n"
+            f"Use cases: {', '.join(use_cases)}\n"
+            f"Reference style: {reference_style or 'none'}\n"
+            f"Generate exactly {scene_count} scenes."
+        )
+        try:
+            import json
+            raw = self._llm.complete(
+                system_prompt=system,
+                user_prompt=user,
+                agent_id="scriptwriter",
+                temperature=0.7,
+            )
+            scenes_data = json.loads(
+                raw.strip().strip("`").removeprefix("json").strip()
+            )
+            return [ScriptScene(**s) for s in scenes_data[:scene_count]]
+        except Exception:
+            logger.warning("llm_scenes_fallback", angle=angle)
+            return self._template_scenes(
+                angle, template, product_title, use_cases, reference_style,
+            )
 
     def _generate_cta(self, product_title: str) -> str:
         """Generate CTA with mandatory affiliate disclosure placeholder."""

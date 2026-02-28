@@ -10,7 +10,7 @@ Rules enforced:
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 import structlog
@@ -147,7 +147,7 @@ class ReferenceIntelligenceAgent(BaseAgent):
         bundle = ReferenceBundle(
             product_id=product_id,
             references=references,
-            created_at=datetime.now(tz=timezone.utc),
+            created_at=datetime.now(tz=UTC),
         )
 
         logger.info(
@@ -183,8 +183,8 @@ class ReferenceIntelligenceAgent(BaseAgent):
                 keywords=ref_data.get("keywords", []),
                 audience_overlap_score=0.7,  # Placeholder
                 trending_relevance=0.5,  # Placeholder
-                created_at=datetime.now(tz=timezone.utc),
-                updated_at=datetime.now(tz=timezone.utc),
+                created_at=datetime.now(tz=UTC),
+                updated_at=datetime.now(tz=UTC),
             )
             references.append(ref)
 
@@ -206,7 +206,7 @@ class ReferenceIntelligenceAgent(BaseAgent):
                 keywords=["minimalist", "clean", "simple"],
                 audience_overlap_score=0.5,
                 trending_relevance=0.5,
-                created_at=datetime.now(tz=timezone.utc),
-                updated_at=datetime.now(tz=timezone.utc),
+                created_at=datetime.now(tz=UTC),
+                updated_at=datetime.now(tz=UTC),
             )
         ]

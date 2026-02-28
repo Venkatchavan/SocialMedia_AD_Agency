@@ -2,16 +2,13 @@
 
 from __future__ import annotations
 
-
-
 from app.collectors.base_collector import CollectedAd
-from app.collectors.youtube_collector import YouTubeCollector, _parse_datetime
 from app.collectors.linkedin_collector import (
     LinkedInCollector,
-    _extract_media_urls,
     _detect_media_type,
+    _extract_media_urls,
 )
-
+from app.collectors.youtube_collector import YouTubeCollector, _parse_datetime
 
 # ── CollectedAd ──────────────────────────────────────────────────────
 

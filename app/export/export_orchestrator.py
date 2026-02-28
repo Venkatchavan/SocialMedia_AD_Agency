@@ -12,11 +12,11 @@ from app.export.base_exporter import BaseExporter, ExportResult
 
 def _build_registry() -> dict[str, BaseExporter]:
     """Lazy-build the exporter registry."""
-    from app.export.exporter_md import MarkdownExporter
-    from app.export.exporter_json import JsonExporter
     from app.export.exporter_html import HtmlExporter
-    from app.export.exporter_pptx import PptxExporter
+    from app.export.exporter_json import JsonExporter
+    from app.export.exporter_md import MarkdownExporter
     from app.export.exporter_pdf import PdfExporter
+    from app.export.exporter_pptx import PptxExporter
 
     return {
         "markdown": MarkdownExporter(),

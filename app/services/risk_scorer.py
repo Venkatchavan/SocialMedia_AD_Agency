@@ -9,13 +9,11 @@ Security rules enforced (from Agents.md):
 
 from __future__ import annotations
 
-from typing import Optional
-
 import structlog
 
+from app.config import get_settings
 from app.schemas.reference import Reference, ScoredReference
 from app.schemas.rights import RightsDecision, RightsRecord
-from app.config import get_settings
 
 logger = structlog.get_logger(__name__)
 
@@ -27,7 +25,7 @@ class RiskScorer:
         self,
         auto_block_threshold: int = 70,
         review_threshold: int = 40,
-        registry: Optional[dict[str, RightsRecord]] = None,
+        registry: dict[str, RightsRecord] | None = None,
     ) -> None:
         settings = get_settings()
         self.auto_block_threshold = auto_block_threshold or settings.risk_score_auto_block

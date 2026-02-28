@@ -5,9 +5,9 @@ from __future__ import annotations
 import pytest
 
 from app.content_generation.copy_writer import (
+    PLATFORM_SPECS,
     CopyWriter,
     GeneratedCaption,
-    PLATFORM_SPECS,
 )
 from app.policies.agent_constitution import ConstitutionViolation
 

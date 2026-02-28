@@ -74,7 +74,7 @@ class DisclosureValidationTool:
 
     def run(self, caption: str, platform: str, auto_fix: bool = True) -> dict:
         """Execute the tool — validate disclosure."""
-        from app.policies.disclosure_rules import validate_disclosure, add_disclosure
+        from app.policies.disclosure_rules import add_disclosure, validate_disclosure
 
         is_valid, reason = validate_disclosure(caption, platform)
 

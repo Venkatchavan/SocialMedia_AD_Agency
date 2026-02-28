@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Literal, Optional
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -22,7 +22,7 @@ class PerformanceMetrics(BaseModel):
     saves: int = 0
     clicks: int = 0
     ctr: float = 0.0
-    watch_time_avg: Optional[float] = None
+    watch_time_avg: float | None = None
     affiliate_clicks: int = 0
     affiliate_conversions: int = 0
     affiliate_revenue: float = 0.0
@@ -37,7 +37,7 @@ class ExperimentVariant(BaseModel):
     config: dict = Field(default_factory=dict, alias="content_config")
     traffic_percentage: float = 0.0
     sample_count: int = 0
-    metrics: Optional[PerformanceMetrics] = None
+    metrics: PerformanceMetrics | None = None
 
     model_config = {"populate_by_name": True}
 
@@ -45,7 +45,7 @@ class ExperimentVariant(BaseModel):
 class ExperimentResult(BaseModel):
     """Statistical result of an experiment."""
 
-    winning_variant: Optional[str] = None
+    winning_variant: str | None = None
     p_value: float = 1.0
     confidence_level: float = 0.0
     lift_percentage: float = 0.0
@@ -67,8 +67,8 @@ class Experiment(BaseModel):
     variants: list[ExperimentVariant] = Field(default_factory=list)
     traffic_split: dict[str, float] = Field(default_factory=dict)
     min_sample_size: int = 100
-    start_date: Optional[datetime] = None
-    end_date: Optional[datetime] = None
+    start_date: datetime | None = None
+    end_date: datetime | None = None
     status: Literal["draft", "active", "running", "completed", "stopped"] = "draft"
-    results: Optional[ExperimentResult] = None
+    results: ExperimentResult | None = None
     created_at: datetime = Field(default_factory=datetime.utcnow)

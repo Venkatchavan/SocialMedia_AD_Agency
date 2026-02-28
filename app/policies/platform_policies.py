@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-
 # Platform capability and spec matrix
 PLATFORM_SPECS: dict[str, dict] = {
     "tiktok": {

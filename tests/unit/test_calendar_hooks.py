@@ -2,16 +2,14 @@
 
 from __future__ import annotations
 
-
 from app.content_generation.calendar_planner import (
     CalendarPlanner,
 )
 from app.content_generation.trend_hooks import (
+    GeneratedHook,
     TrendHookGenerator,
     TrendSignal,
-    GeneratedHook,
 )
-
 
 # ── CalendarPlanner (U-19) ───────────────────────────────────────────
 

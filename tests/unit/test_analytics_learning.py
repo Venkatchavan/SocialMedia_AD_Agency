@@ -8,17 +8,16 @@ from app.analytics import (
     MetricsPuller,
     PostMetrics,
 )
-from app.analytics.performance_learner import (
-    LearningEvent,
-    PatternScore,
-    PerformanceLearner,
-)
 from app.analytics.chat_engine import (
     AnalyticsChatEngine,
     ChatMessage,
     ChatResponse,
 )
-
+from app.analytics.performance_learner import (
+    LearningEvent,
+    PatternScore,
+    PerformanceLearner,
+)
 
 # ── PostMetrics ──
 

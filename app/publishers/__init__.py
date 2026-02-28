@@ -10,7 +10,7 @@ import hashlib
 import hmac
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from enum import Enum
 from typing import Any
 
@@ -214,7 +214,7 @@ class InstagramPublisher(SocialPublisher):
             platform=self.platform.value,
             post_id=f"ig_{request.content_id}",
             post_url=f"https://instagram.com/p/ig_{request.content_id}",
-            published_at=datetime.now(timezone.utc).isoformat(),
+            published_at=datetime.now(UTC).isoformat(),
         )
 
 
@@ -229,7 +229,7 @@ class TikTokPublisher(SocialPublisher):
             platform=self.platform.value,
             post_id=f"tt_{request.content_id}",
             post_url=f"https://tiktok.com/@user/video/tt_{request.content_id}",
-            published_at=datetime.now(timezone.utc).isoformat(),
+            published_at=datetime.now(UTC).isoformat(),
         )
 
 
@@ -244,7 +244,7 @@ class LinkedInPublisher(SocialPublisher):
             platform=self.platform.value,
             post_id=f"li_{request.content_id}",
             post_url=f"https://linkedin.com/feed/update/li_{request.content_id}",
-            published_at=datetime.now(timezone.utc).isoformat(),
+            published_at=datetime.now(UTC).isoformat(),
         )
 
 
@@ -259,7 +259,7 @@ class XPublisher(SocialPublisher):
             platform=self.platform.value,
             post_id=f"x_{request.content_id}",
             post_url=f"https://x.com/user/status/x_{request.content_id}",
-            published_at=datetime.now(timezone.utc).isoformat(),
+            published_at=datetime.now(UTC).isoformat(),
         )
 
 

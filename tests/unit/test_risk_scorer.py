@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
-from app.services.risk_scorer import RiskScorer
 from app.schemas.reference import Reference
 from app.schemas.rights import RightsDecision
+from app.services.risk_scorer import RiskScorer
 
 
 def _make_ref(ref_type: str = "public_domain", risk_score: int = 5) -> Reference:
@@ -17,8 +17,8 @@ def _make_ref(ref_type: str = "public_domain", risk_score: int = 5) -> Reference
         reference_type=ref_type,
         allowed_usage_mode="test",
         risk_score=risk_score,
-        created_at=datetime.now(tz=timezone.utc),
-        updated_at=datetime.now(tz=timezone.utc),
+        created_at=datetime.now(tz=UTC),
+        updated_at=datetime.now(tz=UTC),
     )
 
 

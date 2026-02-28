@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from app.analyzers.seo_auditor import SEOAuditor, SEOAuditResult, SEOCheck
 
-
 GOOD_HTML = """
 <!DOCTYPE html>
 <html>

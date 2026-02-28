@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import hashlib
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from enum import Enum
 from typing import Any
 
@@ -73,7 +73,7 @@ class ApprovalGate:
     def submit_for_review(self, item: ContentItem) -> ContentItem:
         """Submit content for human review."""
         item.status = ContentStatus.READY_FOR_REVIEW
-        item.created_at = datetime.now(timezone.utc).isoformat()
+        item.created_at = datetime.now(UTC).isoformat()
         self._items[item.content_id] = item
 
         logger.info(
@@ -98,7 +98,7 @@ class ApprovalGate:
                 content_id=content_id,
                 action="approve",
                 reviewer=reviewer,
-                timestamp=datetime.now(timezone.utc).isoformat(),
+                timestamp=datetime.now(UTC).isoformat(),
                 success=False,
                 error="Content not found",
             )
@@ -108,7 +108,7 @@ class ApprovalGate:
                 content_id=content_id,
                 action="approve",
                 reviewer=reviewer,
-                timestamp=datetime.now(timezone.utc).isoformat(),
+                timestamp=datetime.now(UTC).isoformat(),
                 success=False,
                 error=f"Cannot approve content in status: {item.status.value}",
             )
@@ -131,7 +131,7 @@ class ApprovalGate:
             content_id=content_id,
             action="approve",
             reviewer=reviewer,
-            timestamp=datetime.now(timezone.utc).isoformat(),
+            timestamp=datetime.now(UTC).isoformat(),
             notes=notes,
         )
 
@@ -145,7 +145,7 @@ class ApprovalGate:
                 content_id=content_id,
                 action="reject",
                 reviewer=reviewer,
-                timestamp=datetime.now(timezone.utc).isoformat(),
+                timestamp=datetime.now(UTC).isoformat(),
                 success=False,
                 error="Content not found",
             )
@@ -166,7 +166,7 @@ class ApprovalGate:
             content_id=content_id,
             action="reject",
             reviewer=reviewer,
-            timestamp=datetime.now(timezone.utc).isoformat(),
+            timestamp=datetime.now(UTC).isoformat(),
             notes=notes,
         )
 
@@ -184,7 +184,7 @@ class ApprovalGate:
                 content_id=content_id,
                 action="edit",
                 reviewer=reviewer,
-                timestamp=datetime.now(timezone.utc).isoformat(),
+                timestamp=datetime.now(UTC).isoformat(),
                 success=False,
                 error="Content not found",
             )
@@ -207,7 +207,7 @@ class ApprovalGate:
             content_id=content_id,
             action="edit",
             reviewer=reviewer,
-            timestamp=datetime.now(timezone.utc).isoformat(),
+            timestamp=datetime.now(UTC).isoformat(),
         )
 
     def get_pending(self, workspace_id: str) -> list[ContentItem]:
@@ -256,6 +256,6 @@ class ApprovalGate:
             content_id=content_id,
             reviewer=reviewer,
             content_hash=content_hash,
-            timestamp=datetime.now(timezone.utc).isoformat(),
+            timestamp=datetime.now(UTC).isoformat(),
             reason=reason,
         )

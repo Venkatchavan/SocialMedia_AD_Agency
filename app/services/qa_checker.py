@@ -17,14 +17,12 @@ Checks enforced (from Agents.md):
 
 from __future__ import annotations
 
-from typing import Optional
-
 import structlog
 
+from app.config import get_settings
 from app.schemas.content import CaptionBundle
 from app.schemas.publish import PlatformPackage
 from app.services.audit_logger import AuditLogger
-from app.config import get_settings
 
 logger = structlog.get_logger(__name__)
 
@@ -94,7 +92,7 @@ class QAChecker:
     def __init__(
         self,
         audit_logger: AuditLogger,
-        published_hashes: Optional[dict[str, set[str]]] = None,
+        published_hashes: dict[str, set[str]] | None = None,
     ) -> None:
         self._audit = audit_logger
         self._settings = get_settings()
@@ -104,7 +102,7 @@ class QAChecker:
     def check(
         self,
         package: PlatformPackage,
-        caption_bundle: Optional[CaptionBundle] = None,
+        caption_bundle: CaptionBundle | None = None,
         session_id: str = "",
     ) -> QADecision:
         """Run all QA checks on a platform package.
@@ -170,7 +168,7 @@ class QAChecker:
     def _check_disclosure(
         self,
         package: PlatformPackage,
-        caption_bundle: Optional[CaptionBundle],
+        caption_bundle: CaptionBundle | None,
     ) -> QACheckResult:
         """Check: affiliate disclosure MUST be present in caption."""
         caption = package.caption

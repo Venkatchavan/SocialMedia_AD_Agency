@@ -14,7 +14,7 @@ from abc import ABC, abstractmethod
 
 import structlog
 
-from app.policies.rate_limits import RateLimiter, CircuitBreaker
+from app.policies.rate_limits import CircuitBreaker, RateLimiter
 from app.services.audit_logger import AuditLogger
 from app.services.secrets import SecretsManager
 

@@ -7,7 +7,7 @@ SECURITY (from Agents_Security.md):
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import structlog
 
@@ -41,7 +41,7 @@ class MediaSigner:
         Returns:
             Tuple of (signed_url, expiry_datetime).
         """
-        expiry = datetime.now(tz=timezone.utc) + timedelta(seconds=expiry_seconds)
+        expiry = datetime.now(tz=UTC) + timedelta(seconds=expiry_seconds)
 
         try:
             import boto3
@@ -71,4 +71,4 @@ class MediaSigner:
 
     def is_url_valid(self, expiry: datetime) -> bool:
         """Check if a signed URL is still valid."""
-        return datetime.now(tz=timezone.utc) < expiry
+        return datetime.now(tz=UTC) < expiry

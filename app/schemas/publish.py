@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -18,7 +17,7 @@ class PlatformPackage(BaseModel):
     signed_media_url: str = ""
     caption: str = ""
     hashtags: list[str] = Field(default_factory=list)
-    scheduled_time: Optional[datetime] = None
+    scheduled_time: datetime | None = None
     content_hash: str = ""
     qa_status: str = "pending"  # pending | approved | rewrite | reject
     compliance_status: str = "pending"
@@ -36,7 +35,7 @@ class PublishResult(BaseModel):
     )
     url: str = ""
     reason: str = ""
-    retry_after: Optional[int] = None  # seconds
+    retry_after: int | None = None  # seconds
     timestamp: datetime = Field(default_factory=datetime.utcnow)
 
     def is_success(self) -> bool:
@@ -50,7 +49,7 @@ class PostQueueItem(BaseModel):
     asset_id: str
     platform: str
     caption: str
-    scheduled_time: Optional[datetime] = None
+    scheduled_time: datetime | None = None
     priority: int = 0
     qa_status: str = "pending"
     compliance_status: str = "pending"

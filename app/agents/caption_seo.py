@@ -9,15 +9,16 @@ CRITICAL RULES:
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 import structlog
 
 from app.agents.base_agent import BaseAgent
+from app.policies.disclosure_rules import add_disclosure, validate_disclosure
 from app.schemas.content import CaptionBundle
-from app.policies.disclosure_rules import validate_disclosure, add_disclosure
 from app.services.audit_logger import AuditLogger
+from app.services.llm_client import LLMClient
 
 logger = structlog.get_logger(__name__)
 
@@ -66,12 +67,18 @@ HASHTAG_LIBRARY: dict[str, list[str]] = {
 class CaptionSEOAgent(BaseAgent):
     """Generate platform-specific captions with proper disclosures."""
 
-    def __init__(self, audit_logger: AuditLogger, session_id: str = "") -> None:
+    def __init__(
+        self,
+        audit_logger: AuditLogger,
+        llm_client: LLMClient | None = None,
+        session_id: str = "",
+    ) -> None:
         super().__init__(
             agent_id="caption_seo",
             audit_logger=audit_logger,
             session_id=session_id,
         )
+        self._llm = llm_client or LLMClient()
 
     def execute(self, inputs: dict[str, Any]) -> dict[str, Any]:
         """Generate captions for all target platforms.
@@ -122,7 +129,7 @@ class CaptionSEOAgent(BaseAgent):
             script_id=script_id,
             captions=captions,
             affiliate_link=affiliate_link,
-            created_at=datetime.now(tz=timezone.utc),
+            created_at=datetime.now(tz=UTC),
         )
 
         # Final verification — ALL captions must have disclosure
@@ -150,7 +157,57 @@ class CaptionSEOAgent(BaseAgent):
         affiliate_link: str,
         hashtags: str,
     ) -> str:
-        """Generate a caption for a specific platform."""
+        """Generate a caption. Uses LLM if available, else template."""
+        if not self._llm.is_dry_run:
+            return self._llm_caption(platform, hook, value_prop, affiliate_link, hashtags)
+
+        return self._template_caption(platform, hook, value_prop, affiliate_link, hashtags)
+
+    def _llm_caption(
+        self,
+        platform: str,
+        hook: str,
+        value_prop: str,
+        affiliate_link: str,
+        hashtags: str,
+    ) -> str:
+        """Generate a caption using the LLM."""
+        system = (
+            f"You write {platform} captions for product ads. "
+            "Return ONLY the caption text. "
+            "MUST include '#ad #affiliate' disclosure. "
+            "No health/medical/financial claims. No fake testimonials."
+        )
+        user = (
+            f"Hook: {hook}\nProduct: {value_prop}\n"
+            f"Link: {affiliate_link}\nHashtags: {hashtags}\n"
+            f"Platform: {platform}\n"
+            "Write one engaging caption with disclosure."
+        )
+        try:
+            caption = self._llm.complete(
+                system_prompt=system,
+                user_prompt=user,
+                agent_id="caption_seo",
+                temperature=0.7,
+                max_tokens=500,
+            )
+            return caption.strip()
+        except Exception:
+            logger.warning("llm_caption_fallback", platform=platform)
+            return self._template_caption(
+                platform, hook, value_prop, affiliate_link, hashtags,
+            )
+
+    def _template_caption(
+        self,
+        platform: str,
+        hook: str,
+        value_prop: str,
+        affiliate_link: str,
+        hashtags: str,
+    ) -> str:
+        """Generate a caption from template (deterministic fallback)."""
         template = CAPTION_TEMPLATES.get(platform, CAPTION_TEMPLATES["instagram"])
 
         # Shorten for X (280 char limit)

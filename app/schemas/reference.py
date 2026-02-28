@@ -7,7 +7,6 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-
 ReferenceType = Literal["licensed_direct", "public_domain", "style_only", "commentary"]
 Medium = Literal["anime", "movie", "music", "novel", "other"]
 

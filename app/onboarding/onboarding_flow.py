@@ -8,7 +8,7 @@ from enum import Enum
 
 import structlog
 
-from app.onboarding.url_scanner import URLScanner, BrandProfile
+from app.onboarding.url_scanner import BrandProfile, URLScanner
 
 logger = structlog.get_logger(__name__)
 

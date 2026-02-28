@@ -6,7 +6,7 @@ Pull post-publish metrics at 6h/24h/72h intervals per platform.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from enum import Enum
 from typing import Any
 
@@ -86,7 +86,7 @@ class MetricsPuller:
 
     def record_metrics(self, metrics: PostMetrics) -> None:
         """Record metrics for a post (or from an API pull)."""
-        metrics.pulled_at = datetime.now(timezone.utc).isoformat()
+        metrics.pulled_at = datetime.now(UTC).isoformat()
         key = metrics.post_id
         if key not in self._metrics:
             self._metrics[key] = []

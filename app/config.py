@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from pydantic_settings import BaseSettings
 from pydantic import Field
+from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     app_env: str = Field(default="dev", alias="APP_ENV")
 
     # LLM
+    llm_dry_run: bool = Field(default=True, alias="LLM_DRY_RUN")
     openai_api_key: str = Field(default="", alias="OPENAI_API_KEY")
     openai_model: str = Field(default="gpt-4o", alias="OPENAI_MODEL")
     use_premium_models: bool = Field(default=False, alias="USE_PREMIUM_MODELS")
@@ -28,7 +29,7 @@ class Settings(BaseSettings):
 
     # Database
     database_url: str = Field(
-        default="postgresql://user:pass@localhost:5432/affiliate_agency",
+        default="sqlite:///./agency_dev.db",
         alias="DATABASE_URL",
     )
 

@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import re
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 import structlog
@@ -93,7 +93,7 @@ class ProductIntakeAgent(BaseAgent):
                 "affiliate_link",
                 f"https://www.amazon.com/dp/{asin}?tag=affiliate-20",
             ),
-            created_at=datetime.now(tz=timezone.utc),
+            created_at=datetime.now(tz=UTC),
         )
 
         return product.model_dump(mode="json")
@@ -117,7 +117,7 @@ class ProductIntakeAgent(BaseAgent):
             price=0.0,
             category="",
             affiliate_link=f"https://www.amazon.com/dp/{asin}?tag=affiliate-20",
-            created_at=datetime.now(tz=timezone.utc),
+            created_at=datetime.now(tz=UTC),
         )
 
         return product.model_dump(mode="json")

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -19,10 +18,10 @@ class AssetRecord(BaseModel):
     mime_type: str = ""
     file_size_bytes: int = 0
     resolution: str = ""  # e.g., "1080x1920"
-    duration_seconds: Optional[float] = None
+    duration_seconds: float | None = None
     generation_params: dict = Field(default_factory=dict)
     signed_url: str = ""
-    signed_url_expiry: Optional[datetime] = None
+    signed_url_expiry: datetime | None = None
     status: str = "generated"
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
@@ -50,5 +49,5 @@ class FinalVideo(BaseModel):
     duration_seconds: float = 0.0
     format: str = "mp4"
     signed_url: str = ""
-    signed_url_expiry: Optional[datetime] = None
+    signed_url_expiry: datetime | None = None
     created_at: datetime = Field(default_factory=datetime.utcnow)

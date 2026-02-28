@@ -14,7 +14,6 @@ from app.db.base import Base
 from app.db.engine import build_engine, build_session_factory, get_session
 from app.db.models import AuditEventModel
 
-
 # ── TenantContext ──────────────────────────────────────
 
 

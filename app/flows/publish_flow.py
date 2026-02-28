@@ -13,7 +13,7 @@ from typing import Protocol
 
 import structlog
 
-from app.policies.rate_limits import RateLimiter, CircuitBreaker, RATE_LIMITS
+from app.policies.rate_limits import RATE_LIMITS, CircuitBreaker, RateLimiter
 from app.services.audit_logger import AuditLogger
 from app.services.content_hasher import ContentHasher
 

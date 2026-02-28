@@ -3,10 +3,9 @@
 Uses LLM to determine category taxonomy, audience persona, and use cases.
 No external scraping — only uses product data + LLM reasoning.
 """
-
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 import structlog
@@ -14,6 +13,7 @@ import structlog
 from app.agents.base_agent import BaseAgent
 from app.schemas.product import EnrichedProduct, ProductRecord
 from app.services.audit_logger import AuditLogger
+from app.services.llm_client import LLMClient
 
 logger = structlog.get_logger(__name__)
 
@@ -29,25 +29,22 @@ CATEGORY_TAXONOMY: dict[str, list[str]] = {
     "Toys & Games": ["Board Games", "Action Figures", "Building", "Educational"],
 }
 
-# Persona templates
-PERSONA_TEMPLATES: list[str] = [
-    "college student who loves {interest} and {medium}",
-    "young professional into {interest} and {medium}",
-    "creative freelancer who enjoys {interest} and {medium}",
-    "tech enthusiast who follows {interest} trends",
-    "home-focused parent interested in {interest}",
-]
-
 
 class ProductEnrichmentAgent(BaseAgent):
     """Enrich product records with category path, persona, and use cases."""
 
-    def __init__(self, audit_logger: AuditLogger, session_id: str = "") -> None:
+    def __init__(
+        self,
+        audit_logger: AuditLogger,
+        llm_client: LLMClient | None = None,
+        session_id: str = "",
+    ) -> None:
         super().__init__(
             agent_id="product_enrichment",
             audit_logger=audit_logger,
             session_id=session_id,
         )
+        self._llm = llm_client or LLMClient()
 
     def execute(self, inputs: dict[str, Any]) -> dict[str, Any]:
         """Enrich a product record.
@@ -79,7 +76,7 @@ class ProductEnrichmentAgent(BaseAgent):
             primary_persona=persona,
             use_cases=use_cases,
             trending_score=trending_score,
-            enriched_at=datetime.now(tz=timezone.utc),
+            enriched_at=datetime.now(tz=UTC),
         )
 
         logger.info(
@@ -92,29 +89,84 @@ class ProductEnrichmentAgent(BaseAgent):
         return {"enriched_product": enriched.model_dump(mode="json")}
 
     def _map_category_path(self, product: ProductRecord) -> list[str]:
-        """Map product to category taxonomy path.
+        """Map product to category taxonomy path. LLM or keyword fallback."""
+        if not self._llm.is_dry_run:
+            return self._llm_category(product)
+        return self._keyword_category(product)
 
-        TODO: Use LLM for more sophisticated mapping.
-        For MVP, use keyword matching.
-        """
+    def _llm_category(self, product: ProductRecord) -> list[str]:
+        """Use LLM for category mapping."""
+        import json
+        system = (
+            "You classify products into categories. "
+            "Return a JSON array of strings representing the category path, "
+            "e.g. [\"Electronics\", \"Audio\"]. Max 3 levels."
+        )
+        user = (
+            f"Product: {product.title}\n"
+            f"Category hint: {product.category or 'none'}\n"
+            f"Price: ${product.price}"
+        )
+        try:
+            raw = self._llm.complete(
+                system_prompt=system,
+                user_prompt=user,
+                agent_id="product_enrichment",
+                temperature=0.3,
+                max_tokens=100,
+            )
+            result = json.loads(raw.strip().strip("`").removeprefix("json").strip())
+            if isinstance(result, list) and result:
+                return [str(x) for x in result[:3]]
+        except Exception:
+            logger.warning("llm_category_fallback", asin=product.asin)
+        return self._keyword_category(product)
+
+    def _keyword_category(self, product: ProductRecord) -> list[str]:
+        """Keyword-based category mapping (deterministic fallback)."""
         title_lower = product.title.lower()
         category = product.category or ""
-
         for top_cat, sub_cats in CATEGORY_TAXONOMY.items():
             if top_cat.lower() in title_lower or top_cat.lower() in category.lower():
-                # Find matching sub-category
                 for sub in sub_cats:
                     if sub.lower() in title_lower:
                         return [top_cat, sub]
                 return [top_cat]
-
         return [category] if category else ["General"]
 
     def _map_persona(self, product: ProductRecord, category_path: list[str]) -> str:
-        """Map product to an audience persona.
+        """Map product to audience persona. LLM or lookup fallback."""
+        if not self._llm.is_dry_run:
+            return self._llm_persona(product, category_path)
+        return self._keyword_persona(category_path)
 
-        TODO: Use LLM for nuanced persona creation.
-        """
+    def _llm_persona(self, product: ProductRecord, category_path: list[str]) -> str:
+        """Use LLM for persona creation."""
+        system = (
+            "You create concise audience personas for product marketing. "
+            "Return ONLY a short persona description (one sentence). "
+            "No quotes around it."
+        )
+        user = (
+            f"Product: {product.title}\n"
+            f"Category: {' > '.join(category_path)}\n"
+            "Describe the ideal buyer persona."
+        )
+        try:
+            persona = self._llm.complete(
+                system_prompt=system,
+                user_prompt=user,
+                agent_id="product_enrichment",
+                temperature=0.6,
+                max_tokens=80,
+            )
+            return persona.strip().strip('"')
+        except Exception:
+            logger.warning("llm_persona_fallback", asin=product.asin)
+            return self._keyword_persona(category_path)
+
+    def _keyword_persona(self, category_path: list[str]) -> str:
+        """Keyword-based persona mapping (deterministic fallback)."""
         category = category_path[0] if category_path else "General"
 
         persona_map: dict[str, str] = {
@@ -131,45 +183,68 @@ class ProductEnrichmentAgent(BaseAgent):
     def _map_use_cases(
         self, product: ProductRecord, category_path: list[str]
     ) -> list[str]:
-        """Determine top use cases for the product.
+        """Determine top use cases. LLM or keyword fallback."""
+        if not self._llm.is_dry_run:
+            return self._llm_use_cases(product, category_path)
+        return self._keyword_use_cases(product)
 
-        TODO: Use LLM for context-aware use case discovery.
-        """
+    def _llm_use_cases(
+        self, product: ProductRecord, category_path: list[str],
+    ) -> list[str]:
+        """Use LLM for use case discovery."""
+        import json
+        system = (
+            "You identify product use cases for marketing. "
+            "Return a JSON array of 3 short use-case strings."
+        )
+        user = (
+            f"Product: {product.title}\n"
+            f"Category: {' > '.join(category_path)}\n"
+            "List 3 top use cases."
+        )
+        try:
+            raw = self._llm.complete(
+                system_prompt=system,
+                user_prompt=user,
+                agent_id="product_enrichment",
+                temperature=0.5,
+                max_tokens=150,
+            )
+            result = json.loads(raw.strip().strip("`").removeprefix("json").strip())
+            if isinstance(result, list) and result:
+                return [str(x) for x in result[:3]]
+        except Exception:
+            logger.warning("llm_use_cases_fallback", asin=product.asin)
+        return self._keyword_use_cases(product)
+
+    def _keyword_use_cases(self, product: ProductRecord) -> list[str]:
+        """Keyword-based use case mapping (deterministic fallback)."""
         title_lower = product.title.lower()
         use_cases: list[str] = []
 
         # Simple keyword-based use case mapping
-        keyword_use_cases: dict[str, list[str]] = {
-            "headphone": ["music listening", "video calls", "gaming", "commute"],
-            "keyboard": ["typing", "gaming", "programming", "content creation"],
+        kw_map = {
+            "headphone": ["music listening", "video calls", "commute"],
+            "keyboard": ["typing", "gaming", "programming"],
             "mouse": ["gaming", "productivity", "design work"],
             "speaker": ["music listening", "party", "home entertainment"],
             "lamp": ["reading", "ambient lighting", "desk setup"],
             "mug": ["coffee drinking", "desk accessory", "gift"],
         }
 
-        for keyword, cases in keyword_use_cases.items():
+        for keyword, cases in kw_map.items():
             if keyword in title_lower:
                 use_cases.extend(cases[:3])
                 break
-
         if not use_cases:
             use_cases = ["everyday use", "gift idea", "lifestyle upgrade"]
-
         return use_cases[:3]
 
     def _calculate_trending_score(self, product: ProductRecord) -> int:
-        """Calculate trending relevance score.
-
-        TODO: Integrate with trend APIs for real scoring.
-        """
-        # Placeholder — real implementation checks social trends, search volume
-        score = 50  # Baseline
-
-        # Higher price products tend to be more "considered" purchases
+        """Calculate trending relevance score (placeholder)."""
+        score = 50
         if product.price > 100:
             score += 10
         if product.price > 300:
             score += 10
-
         return min(score, 100)

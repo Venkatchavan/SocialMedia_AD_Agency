@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import random
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 import structlog
@@ -62,7 +62,7 @@ class ExperimentFlow:
             name=name,
             variants=exp_variants,
             status="active",
-            created_at=datetime.now(tz=timezone.utc),
+            created_at=datetime.now(tz=UTC),
         )
 
         self._experiments[experiment.experiment_id] = experiment

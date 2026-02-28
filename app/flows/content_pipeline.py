@@ -11,9 +11,9 @@ Implements APPROVE / REWRITE / REJECT branching per Agents.md.
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 import structlog
 from pydantic import BaseModel, Field
@@ -71,8 +71,8 @@ class PipelineState(BaseModel):
     rewrite_count: int = 0
     max_retries: int = 3
     error_message: str = ""
-    created_at: datetime = Field(default_factory=lambda: datetime.now(tz=timezone.utc))
-    completed_at: Optional[datetime] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(tz=UTC))
+    completed_at: datetime | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -100,6 +100,7 @@ class ContentPipelineFlow:
         rights_engine: Any,
         qa_checker: Any,
         audit_logger: Any,
+        manager_agent: Any = None,
     ) -> None:
         self._intake = product_intake_agent
         self._enrichment = product_enrichment_agent
@@ -110,6 +111,7 @@ class ContentPipelineFlow:
         self._rights = rights_engine
         self._qa = qa_checker
         self._audit = audit_logger
+        self._manager = manager_agent
 
     def run(self, state: PipelineState) -> PipelineState:
         """Execute the full pipeline.
@@ -134,6 +136,13 @@ class ContentPipelineFlow:
                 return self._finalize(state)
 
             state = self._step_content_generation(state)
+
+            # Manager review (LLM-powered quality gate)
+            if self._manager is not None:
+                state = self._step_manager_review(state)
+                if state.status == PipelineStatus.REJECTED:
+                    return self._finalize(state)
+
             state = self._step_qa(state)
 
             # QA branching
@@ -289,13 +298,35 @@ class ContentPipelineFlow:
 
         return state
 
+    def _step_manager_review(self, state: PipelineState) -> PipelineState:
+        """Step 5b: Manager agent reviews generated content via LLM."""
+        logger.info("step_manager_review", pipeline_id=state.pipeline_id)
+
+        review = self._manager.run({
+            "action": "review_content",
+            "script": state.script,
+            "captions": state.caption_bundle.get("captions", {}),
+            "product_title": state.product.get("title", ""),
+        })
+
+        if review.get("decision") == "REWRITE":
+            state.rewrite_count += 1
+            if state.rewrite_count > state.max_retries:
+                state.status = PipelineStatus.REJECTED
+                state.error_message = "Manager review: max rewrites exceeded"
+                return state
+            logger.info("manager_rewrite", feedback=review.get("feedback", ""))
+            return self._step_content_generation(state)
+
+        return state
+
     def _step_qa(self, state: PipelineState) -> PipelineState:
         """Step 6: Quality assurance check (deterministic)."""
         state.status = PipelineStatus.QA
         logger.info("step_qa", pipeline_id=state.pipeline_id)
 
-        from app.schemas.publish import PlatformPackage
         from app.schemas.content import CaptionBundle
+        from app.schemas.publish import PlatformPackage
 
         # Build a synthetic PlatformPackage for QA checking
         captions = state.caption_bundle.get("captions", {})
@@ -369,7 +400,7 @@ class ContentPipelineFlow:
                 "caption": caption,
                 "script": state.script,
                 "status": "queued",
-                "scheduled_at": datetime.now(tz=timezone.utc).isoformat(),
+                "scheduled_at": datetime.now(tz=UTC).isoformat(),
             }
             state.platform_packages.append(package)
 
@@ -385,7 +416,7 @@ class ContentPipelineFlow:
         if state.status not in (PipelineStatus.REJECTED, PipelineStatus.ERROR):
             state.status = PipelineStatus.COMPLETED
 
-        state.completed_at = datetime.now(tz=timezone.utc)
+        state.completed_at = datetime.now(tz=UTC)
 
         self._audit.log(
             agent_id="pipeline",

@@ -6,7 +6,7 @@ Redis-backed scheduling with best-time optimization.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from enum import Enum
 from typing import Any
 
@@ -97,7 +97,7 @@ class PublishScheduler:
             platform=platform,
             scheduled_at=scheduled_at,
             status=ScheduleStatus.SCHEDULED,
-            created_at=datetime.now(timezone.utc).isoformat(),
+            created_at=datetime.now(UTC).isoformat(),
         )
         self._queue[post_id] = post
         logger.info(
@@ -143,7 +143,7 @@ class PublishScheduler:
 
     def get_due(self) -> list[ScheduledPost]:
         """Get posts that are due for publishing (scheduled_at <= now)."""
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(UTC).isoformat()
         return [
             p
             for p in self._queue.values()

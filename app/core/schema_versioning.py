@@ -7,7 +7,8 @@ Prevents silent data corruption from schema drift (U-14).
 from __future__ import annotations
 
 import copy
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 # Migration function type: takes data dict, returns migrated data dict
 MigrationFn = Callable[[dict[str, Any]], dict[str, Any]]

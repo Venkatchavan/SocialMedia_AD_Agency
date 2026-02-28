@@ -6,7 +6,6 @@ from typing import Any
 
 from app.export.base_exporter import BaseExporter, ExportResult
 
-
 _CSS = """
 body { font-family: 'Segoe UI', Arial, sans-serif; max-width: 800px;
        margin: 2em auto; padding: 0 1em; color: #222; }

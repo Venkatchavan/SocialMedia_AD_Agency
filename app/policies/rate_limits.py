@@ -7,8 +7,7 @@ Security (from Agents_Security.md Rule 9):
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
 
 import structlog
 
@@ -87,7 +86,7 @@ class RateLimiter:
 
     def can_post(self) -> tuple[bool, str]:
         """Check if posting is allowed right now."""
-        now = datetime.now(tz=timezone.utc)
+        now = datetime.now(tz=UTC)
 
         # Check daily limit
         today_posts = [
@@ -109,7 +108,7 @@ class RateLimiter:
 
     def record_post(self) -> None:
         """Record that a post was made."""
-        self._post_timestamps.append(datetime.now(tz=timezone.utc))
+        self._post_timestamps.append(datetime.now(tz=UTC))
 
     def check_and_consume(self) -> bool:
         """Check if posting is allowed and record the post if so.
@@ -137,7 +136,7 @@ class CircuitBreaker:
         self.failure_threshold = failure_threshold
         self.recovery_timeout = recovery_timeout
         self._failure_count: int = 0
-        self._last_failure_time: Optional[datetime] = None
+        self._last_failure_time: datetime | None = None
         self._state: str = "closed"  # closed | open | half-open
 
     @property
@@ -146,7 +145,7 @@ class CircuitBreaker:
             # Check if recovery timeout has passed
             if self._last_failure_time:
                 elapsed = (
-                    datetime.now(tz=timezone.utc) - self._last_failure_time
+                    datetime.now(tz=UTC) - self._last_failure_time
                 ).total_seconds()
                 if elapsed >= self.recovery_timeout:
                     self._state = "half-open"
@@ -164,7 +163,7 @@ class CircuitBreaker:
 
     def record_failure(self) -> None:
         self._failure_count += 1
-        self._last_failure_time = datetime.now(tz=timezone.utc)
+        self._last_failure_time = datetime.now(tz=UTC)
         if self._failure_count >= self.failure_threshold:
             self._state = "open"
             logger.warning(

@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
-import pytest
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
-from app.schemas.product import ProductRecord
-from app.schemas.reference import Reference, ReferenceBundle
+import pytest
+
 from app.schemas.audit import AuditEvent
 from app.schemas.content import CaptionBundle
+from app.schemas.product import ProductRecord
+from app.schemas.reference import Reference, ReferenceBundle
 
 
 class TestProductSchemas:
@@ -18,7 +19,7 @@ class TestProductSchemas:
         """Valid product data should create a ProductRecord."""
         product = ProductRecord(
             id="test-id",
-            created_at=datetime.now(tz=timezone.utc),
+            created_at=datetime.now(tz=UTC),
             affiliate_link="https://amazon.com/dp/B0CTEST123?tag=aff-20",
             **sample_product_data,
         )
@@ -35,14 +36,14 @@ class TestProductSchemas:
                 price=10.0,
                 category="Test",
                 affiliate_link="https://example.com",
-                created_at=datetime.now(tz=timezone.utc),
+                created_at=datetime.now(tz=UTC),
             )
 
     def test_product_serialization(self, sample_product_data: dict):
         """ProductRecord should serialize to dict correctly."""
         product = ProductRecord(
             id="test-id",
-            created_at=datetime.now(tz=timezone.utc),
+            created_at=datetime.now(tz=UTC),
             affiliate_link="https://amazon.com/dp/B0CTEST123?tag=aff-20",
             **sample_product_data,
         )
@@ -65,8 +66,8 @@ class TestReferenceSchemas:
             risk_score=10,
             audience_overlap_score=0.5,
             trending_relevance=0.5,
-            created_at=datetime.now(tz=timezone.utc),
-            updated_at=datetime.now(tz=timezone.utc),
+            created_at=datetime.now(tz=UTC),
+            updated_at=datetime.now(tz=UTC),
         )
         assert ref.reference_type == "style_only"
         assert ref.risk_score == 10
@@ -76,7 +77,7 @@ class TestReferenceSchemas:
         bundle = ReferenceBundle(
             product_id="prod-1",
             references=[],
-            created_at=datetime.now(tz=timezone.utc),
+            created_at=datetime.now(tz=UTC),
         )
         assert bundle.product_id == "prod-1"
         assert len(bundle.references) == 0
@@ -93,7 +94,7 @@ class TestAuditSchemas:
             action="test_action",
             decision="APPROVED",
             reason="Test reason",
-            timestamp=datetime(2024, 1, 1, tzinfo=timezone.utc),
+            timestamp=datetime(2024, 1, 1, tzinfo=UTC),
         )
         hash_input = event.to_hash_input()
         assert "test_agent" in hash_input
@@ -113,7 +114,7 @@ class TestCaptionSchemas:
                 "instagram": "Check it out! #ad",
             },
             affiliate_link="https://amazon.com/dp/B0CTEST123",
-            created_at=datetime.now(tz=timezone.utc),
+            created_at=datetime.now(tz=UTC),
         )
         assert bundle.has_disclosure("tiktok")
         assert bundle.has_disclosure("instagram")
@@ -127,6 +128,6 @@ class TestCaptionSchemas:
                 "tiktok": "Great product, buy now!",
             },
             affiliate_link="https://amazon.com/dp/B0CTEST123",
-            created_at=datetime.now(tz=timezone.utc),
+            created_at=datetime.now(tz=UTC),
         )
         assert not bundle.has_disclosure("tiktok")

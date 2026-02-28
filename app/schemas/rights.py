@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -23,7 +22,7 @@ class RightsRecord(BaseModel):
             "derivative": False,
         }
     )
-    license_expiry: Optional[datetime] = None
+    license_expiry: datetime | None = None
     territory: str = "worldwide"
     status: str = "pending"  # active | expired | revoked | pending | blocked
     risk_score: int = Field(ge=0, le=100, default=100)
@@ -47,7 +46,7 @@ class RightsDecision(BaseModel):
     decision: str = Field(description="APPROVE | REWRITE | REJECT")
     reason: str
     risk_score: int = Field(ge=0, le=100, default=100)
-    rewrite_instructions: Optional[str] = None
+    rewrite_instructions: str | None = None
     audit_id: str = ""
     timestamp: datetime = Field(default_factory=datetime.utcnow)
 

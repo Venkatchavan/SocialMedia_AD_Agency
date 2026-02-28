@@ -10,8 +10,7 @@ from __future__ import annotations
 import hashlib
 import json
 import uuid
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
 
 import structlog
 
@@ -23,8 +22,13 @@ logger = structlog.get_logger(__name__)
 class AuditLogger:
     """Append-only audit logger with hash-chain integrity."""
 
-    def __init__(self, store: Optional[object] = None) -> None:
+    def __init__(
+        self,
+        store: object | None = None,
+        session_factory: object | None = None,
+    ) -> None:
         self._store = store  # Database / file store
+        self._session_factory = session_factory  # SQLAlchemy sessionmaker
         self._last_event_hash: str = ""
         self._events: list[AuditEvent] = []  # In-memory fallback for dev
 
@@ -34,10 +38,10 @@ class AuditLogger:
         action: str,
         decision: str = "",
         reason: str = "",
-        input_data: Optional[dict] = None,
-        output_data: Optional[dict] = None,
+        input_data: dict | None = None,
+        output_data: dict | None = None,
         session_id: str = "",
-        metadata: Optional[dict] = None,
+        metadata: dict | None = None,
     ) -> AuditEvent:
         """Create and persist an immutable audit event.
 
@@ -69,7 +73,7 @@ class AuditLogger:
             session_id=session_id,
             previous_event_hash=self._last_event_hash,
             metadata=metadata or {},
-            created_at=datetime.now(tz=timezone.utc),
+            created_at=datetime.now(tz=UTC),
         )
 
         # Update hash chain
@@ -116,7 +120,39 @@ class AuditLogger:
     def _persist(self, event: AuditEvent) -> None:
         """Persist event to store. Append-only — never update or delete."""
         self._events.append(event)
-        # TODO: Persist to database (append-only table) in production
+
+        if self._session_factory is not None:
+            self._persist_to_db(event)
+
+    def _persist_to_db(self, event: AuditEvent) -> None:
+        """Write audit event to database (append-only)."""
+        try:
+            from app.db.models import AuditEventModel
+
+            session = self._session_factory()
+            try:
+                row = AuditEventModel(
+                    id=event.event_id,
+                    agent=event.agent_id,
+                    action=event.action,
+                    input_hash=event.input_hash,
+                    output_hash=event.output_hash,
+                    decision=event.decision,
+                    reason=event.reason,
+                    session_id=event.session_id,
+                    previous_event_hash=event.previous_event_hash,
+                    timestamp=event.created_at.isoformat(),
+                    workspace_id="default",
+                )
+                session.add(row)
+                session.commit()
+            except Exception:
+                session.rollback()
+                raise
+            finally:
+                session.close()
+        except Exception as e:
+            logger.warning("audit_db_persist_failed", error=str(e))
 
     @staticmethod
     def _hash_data(data: dict) -> str:

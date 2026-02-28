@@ -9,7 +9,7 @@ from dataclasses import dataclass
 
 import structlog
 
-from app.billing import PlanTier, PLANS
+from app.billing import PLANS, PlanTier
 from app.config import get_settings
 
 logger = structlog.get_logger(__name__)

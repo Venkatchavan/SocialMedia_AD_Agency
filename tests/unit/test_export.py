@@ -8,11 +8,10 @@ import os
 import pytest
 
 from app.export.base_exporter import ExportResult, get_available_formats
-from app.export.exporter_md import MarkdownExporter
-from app.export.exporter_json import JsonExporter
-from app.export.exporter_html import HtmlExporter
 from app.export.export_orchestrator import export_brief
-
+from app.export.exporter_html import HtmlExporter
+from app.export.exporter_json import JsonExporter
+from app.export.exporter_md import MarkdownExporter
 
 SAMPLE_BRIEF = {
     "title": "Summer Headphones Campaign",

@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import json
 import os
-from typing import Optional
 
 import structlog
 
@@ -41,7 +40,7 @@ class SecretsManager:
         if key in self._cache:
             return self._cache[key]
 
-        value: Optional[str] = None
+        value: str | None = None
 
         if self._backend == "env":
             value = os.environ.get(key, "")
@@ -81,7 +80,7 @@ class SecretsManager:
             return json.loads(raw) if raw else {}
         return {}
 
-    def _get_from_aws(self, key: str) -> Optional[str]:
+    def _get_from_aws(self, key: str) -> str | None:
         """Fetch from AWS Secrets Manager."""
         try:
             import boto3
@@ -93,7 +92,7 @@ class SecretsManager:
             logger.error("aws_secrets_error", key=key)
             return None
 
-    def _get_from_vault(self, key: str) -> Optional[str]:
+    def _get_from_vault(self, key: str) -> str | None:
         """Fetch from HashiCorp Vault."""
         try:
             import hvac

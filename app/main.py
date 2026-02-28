@@ -11,22 +11,22 @@ from typing import Any
 
 import structlog
 
-from app.config import get_settings
-from app.services.audit_logger import AuditLogger
-from app.services.rights_engine import RightsEngine
-from app.services.risk_scorer import RiskScorer
-from app.services.qa_checker import QAChecker
-from app.services.content_hasher import ContentHasher
-from app.services.secrets import SecretsManager
-
-from app.agents.product_intake import ProductIntakeAgent
+from app.agents.caption_seo import CaptionSEOAgent
+from app.agents.manager import ManagerAgent
+from app.agents.orchestrator import OrchestratorAgent
 from app.agents.product_enrichment import ProductEnrichmentAgent
+from app.agents.product_intake import ProductIntakeAgent
 from app.agents.reference_intelligence import ReferenceIntelligenceAgent
 from app.agents.scriptwriter import ScriptwriterAgent
-from app.agents.caption_seo import CaptionSEOAgent
-from app.agents.orchestrator import OrchestratorAgent
-
+from app.config import get_settings
 from app.flows.content_pipeline import ContentPipelineFlow, PipelineState
+from app.services.audit_logger import AuditLogger
+from app.services.content_hasher import ContentHasher
+from app.services.llm_client import LLMClient
+from app.services.qa_checker import QAChecker
+from app.services.rights_engine import RightsEngine
+from app.services.risk_scorer import RiskScorer
+from app.services.secrets import SecretsManager
 
 logger = structlog.get_logger(__name__)
 
@@ -36,6 +36,7 @@ def build_pipeline() -> ContentPipelineFlow:
     settings = get_settings()
 
     # Core services
+    llm_client = LLMClient()
     audit_logger = AuditLogger()
     SecretsManager(backend=settings.secrets_backend)
     ContentHasher()
@@ -43,13 +44,14 @@ def build_pipeline() -> ContentPipelineFlow:
     RiskScorer()
     qa_checker = QAChecker(audit_logger=audit_logger)
 
-    # Agents
+    # Agents (with LLM wiring)
     intake = ProductIntakeAgent(audit_logger=audit_logger)
-    enrichment = ProductEnrichmentAgent(audit_logger=audit_logger)
+    enrichment = ProductEnrichmentAgent(audit_logger=audit_logger, llm_client=llm_client)
     reference = ReferenceIntelligenceAgent(audit_logger=audit_logger)
-    scriptwriter = ScriptwriterAgent(audit_logger=audit_logger)
-    caption = CaptionSEOAgent(audit_logger=audit_logger)
+    scriptwriter = ScriptwriterAgent(audit_logger=audit_logger, llm_client=llm_client)
+    caption = CaptionSEOAgent(audit_logger=audit_logger, llm_client=llm_client)
     orchestrator = OrchestratorAgent(audit_logger=audit_logger)
+    manager = ManagerAgent(audit_logger=audit_logger, llm_client=llm_client)
 
     # Wire the pipeline flow
     pipeline = ContentPipelineFlow(
@@ -62,6 +64,7 @@ def build_pipeline() -> ContentPipelineFlow:
         rights_engine=rights_engine,
         qa_checker=qa_checker,
         audit_logger=audit_logger,
+        manager_agent=manager,
     )
 
     return pipeline

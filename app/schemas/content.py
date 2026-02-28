@@ -7,7 +7,6 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-
 ContentAngle = Literal[
     "comparison", "top_3", "story", "problem_solution", "aesthetic", "meme_style"
 ]

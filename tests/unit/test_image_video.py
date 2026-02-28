@@ -22,7 +22,6 @@ from app.content_generation.video_gen import (
     VoiceProvider,
 )
 
-
 # ── Image Prompt Builder ──
 
 
