@@ -1,71 +1,192 @@
-# SocialMedia AD Agency — Creative Intelligence OS
+# SocialMedia AD Agency
 
 [![CI](https://github.com/Venkatchavan/SocialMedia_AD_Agency/actions/workflows/ci.yml/badge.svg)](https://github.com/Venkatchavan/SocialMedia_AD_Agency/actions/workflows/ci.yml)
+![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue)
+![Tests](https://img.shields.io/badge/tests-401%20passed-brightgreen)
+![Coverage](https://img.shields.io/badge/coverage-75%25-green)
 
-> An automated, multi-platform ad research pipeline that turns raw social data into production-ready creative briefs — driven by AI, compliant by design.
+> Production-grade SaaS platform for automated affiliate ad creation and multi-platform publishing — powered by CrewAI agents, compliant by design.
 
 ---
 
 ## What It Does
 
-| Step | Description |
-|------|-------------|
-| **Collect** | Pull live ads from TikTok, Meta, Pinterest via Apify |
-| **Analyze** | Tag hooks, angles, formats with vision AI (Gemini / OpenAI) |
-| **Synthesize** | Cluster winning patterns, extract insights, build AoT atoms |
-| **Brand Enhancement** | Auto-update & version the Brand Book with new market signals |
-| **Brief** | Generate AI-enriched creative briefs with SMP, RTBs, hooks, scripts |
-| **QA Gate** | Block PII, competitor copy, unsubstantiated claims |
-| **Export** | JSON bundle + Markdown brief + ZIP for delivery |
+| Stage | Description |
+|-------|-------------|
+| **Ingest** | Product intake via Amazon ASIN/URL with automatic enrichment |
+| **Research** | Reference intelligence — find winning ads across platforms |
+| **Rights** | Deterministic rights verification + risk scoring (0–100) |
+| **Create** | AI-generated scripts, copy, images, and video storyboards |
+| **QA** | Block PII, competitor copy, unsubstantiated claims, missing disclosures |
+| **Approve** | Human-in-the-loop approval gate with audit trail |
+| **Publish** | Scheduled multi-platform publishing (TikTok, Instagram, X, Pinterest) |
+| **Learn** | Analytics collection, performance learning, AI chat insights |
 
 ---
 
 ## Key Features
 
-- **Multi-provider LLM Router** — OpenAI, Gemini, Anthropic, Mistral; priority-ordered via env var
-- **Brand Enhancement Engine** — incremental, versioned Brand Book updated from keywords/hashtags each run
-- **Compliance Suite** — SSRF guard, per-client policy, preflight gate, retention cleanup, incident response
-- **Industry-agnostic** — SaaS, e-commerce, healthcare, fashion, finance, B2B, creators
-- **250-line file limit** enforced by CI
-- **Fully tested** — test suite across 6 modules
+- **CrewAI Agent Orchestration** — 6 specialized agents (product intake, enrichment, reference intelligence, scriptwriter, caption/SEO, orchestrator)
+- **Multi-Provider LLM Router** — OpenAI, Gemini, Anthropic, Mistral; priority-ordered via `LLM_PRIORITY` env var
+- **FastAPI REST API** — Auth, RBAC, workspace management, async pipeline triggers
+- **Multi-Tenancy** — Tenant-isolated data with row-level security
+- **PostgreSQL + Alembic** — Versioned schema migrations
+- **Content Generation Suite** — Copy writer, image gen, video gen, calendar planner, trend hooks
+- **Compliance Engine** — Rights verification, risk scoring, agent constitution, disclosure rules
+- **Billing Integration** — Stripe-based subscription tiers (Starter/Pro/Enterprise) with usage metering
+- **Vector Store** — Semantic search for reference ads and content
+- **Export Pipeline** — JSON, Markdown, HTML, PDF, PPTX formats
+- **White-Label Support** — Custom branding per tenant
+- **401 tests, 75% coverage** — Enforced by CI (minimum 70%)
 
 ---
 
-## Repo Layout
+## Architecture
 
 ```
-.github/workflows/ci.yml   ← Lint (ruff) + Test (py3.11, py3.12) + Smoke CI
-Instrutctions_File/        ← Agent instruction documents (AGENTS.md, Brain.md, …)
-workspace/                 ← All Python source, tests, and client data
-  cli.py + cli_commands.py ← CLI entry points
-  brand_enchancement/      ← Brand Enhancement Engine
-  analyzers/               ← LLMRouter + Gemini + media analysis
-  briefs/                  ← Brief writer + template loader
-  collectors/              ← Apify + TikTok / Meta / Pinterest
-  compliance/              ← Preflight, cleanup, incident, policy
-  core/                    ← Schemas, config, enums, logging
-  db/                      ← SQLite repositories
-  export/                  ← JSON + MD + ZIP export
-  orchestration/           ← Pipeline, scheduler, CrewAI crew
-  qa/                      ← QA gate, PII redaction, claim checks
-  synthesis/               ← Clustering, insights, AoT writer
-  tests/                   ← Full test suite
-  clients/sample_client/   ← Example workspace with Brand_Book.md
+┌─────────────────────────────────────────────────────────┐
+│                    FastAPI REST API                       │
+│              (Auth, RBAC, Multi-Tenancy)                 │
+├─────────────────────────────────────────────────────────┤
+│                  CrewAI Agent Layer                       │
+│  product_intake → enrichment → reference_intelligence    │
+│  → scriptwriter → caption_seo → orchestrator             │
+├─────────────────────────────────────────────────────────┤
+│              Content Generation Engine                   │
+│  copy_writer │ image_gen │ video_gen │ calendar_planner  │
+├──────────┬──────────┬───────────┬───────────────────────┤
+│ Policies │ Services │ Schemas   │ Platform Adapters      │
+│ rights   │ audit    │ product   │ TikTok, IG, X,         │
+│ QA       │ secrets  │ content   │ Pinterest, Amazon      │
+│ rates    │ media    │ publish   │                        │
+├──────────┴──────────┴───────────┴───────────────────────┤
+│     PostgreSQL + Alembic  │  Redis  │  Vector Store      │
+└─────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Project Structure
+
+```
+app/
+├── adapters/           Platform adapters (Amazon, TikTok, Instagram, X, Pinterest)
+├── agents/             CrewAI agents (intake, enrichment, reference, scriptwriter, caption, orchestrator)
+├── analytics/          Performance metrics, learning engine, AI chat
+├── analyzers/          SEO auditor
+├── api/                FastAPI app + routes (auth, health, pipelines, workspaces)
+├── approval/           Human approval gate with audit logging
+├── billing/            Stripe billing, quota enforcement
+├── collectors/         YouTube + LinkedIn data collectors
+├── content_generation/ Copy writer, image gen, video gen, calendar, trend hooks
+├── core/               Auth, RBAC, LLM router, logging, multi-tenancy, white-label, schema versioning
+├── db/                 SQLAlchemy models, Alembic migrations, vector store
+├── export/             Multi-format export (JSON, MD, HTML, PDF, PPTX)
+├── flows/              CrewAI flows (content pipeline, async pipeline, publish, experiment)
+├── onboarding/         Tenant onboarding flow + URL scanner
+├── policies/           Agent constitution, disclosure rules, platform policies, rate limits
+├── publishers/         Social media publisher with compliance gates + dedup
+├── scheduling/         Post scheduling engine
+├── schemas/            Pydantic v2 models (product, content, publish, rights, audit, analytics)
+├── services/           Deterministic services (audit, rights, risk, QA, secrets, media signing)
+└── tools/              CrewAI tools (Amazon, content, platform, rights, storage)
+
+tests/
+├── unit/               29 test modules — 401 tests
+└── integration/        End-to-end MVP flow test
 ```
 
 ---
 
 ## Quick Start
 
+### Prerequisites
+
+- Python 3.12+
+- PostgreSQL 16 (optional — SQLite for dev)
+- Redis 7 (optional — for caching)
+
+### Setup
+
 ```bash
-cd workspace
-pip install -r requirements.txt
-cp .env.example .env        # add your API keys
-python cli.py run --workspace sample_client
+git clone https://github.com/Venkatchavan/SocialMedia_AD_Agency.git
+cd SocialMedia_AD_Agency
+python -m venv .venv
+source .venv/bin/activate        # Windows: .venv\Scripts\Activate.ps1
+pip install -e ".[dev]"
+cp .env.example .env             # Add your API keys
 ```
 
-See [workspace/README.md](workspace/README.md) for the complete guide including all CLI commands,
-Brand Enhancement Engine docs, LLM Router configuration, and compliance reference.
+### Run Tests
+
+```bash
+pytest tests/ -q
+```
+
+### Start API Server
+
+```bash
+uvicorn app.api.main:app --reload
+```
+
+---
+
+## CI Pipeline
+
+GitHub Actions workflow with 2 jobs:
+
+| Job | What It Does |
+|-----|-------------|
+| **lint** | `ruff check app/ tests/` — E, F, W rules |
+| **test** | `pytest` on Python 3.12 with `--cov-fail-under=70` |
+
+---
+
+## Environment Variables
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `LLM_PRIORITY` | Comma-separated LLM providers: `openai,gemini,anthropic` | Yes |
+| `OPENAI_API_KEY` | OpenAI API key | If using OpenAI |
+| `GEMINI_API_KEY` | Google Gemini API key | If using Gemini |
+| `DATABASE_URL` | PostgreSQL connection string | For production |
+| `REDIS_URL` | Redis connection string | For caching |
+| `STRIPE_SECRET_KEY` | Stripe billing API key | For billing |
+| `JWT_SECRET_KEY` | Secret for JWT auth tokens | Yes |
+
+---
+
+## Compliance
+
+All content passes through deterministic compliance checks before publishing:
+
+- **Rights Engine** — Verifies reference type (licensed, public domain, style-only, commentary)
+- **Risk Scorer** — Scores 0–100; blocks at threshold 70+
+- **QA Checker** — Blocks PII, competitor mentions, unsubstantiated claims
+- **Disclosure Rules** — Auto-adds platform-specific affiliate disclosures (#ad, Paid partnership, etc.)
+- **Agent Constitution** — Validates all agent inputs/outputs against forbidden patterns
+- **Anti-Spam** — SHA-256 content hash dedup prevents duplicate publishing
+
+See [Agents.md](Agents.md) for the 10 non-negotiable agentic rules.
+
+---
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [SYSTEM_DESIGN.md](SYSTEM_DESIGN.md) | Full system architecture (14 sections) |
+| [Agents.md](Agents.md) | 10 agentic compliance rules |
+| [Agents_Security.md](Agents_Security.md) | Security architecture & threat model |
+| [Documentation.md](Documentation.md) | Documentation generation rules |
+| [docs/phases/](docs/phases/) | Phase 1 MVP + Phase 2–5 SaaS upgrade docs |
+| [docs/agents/](docs/agents/) | Agent registry and module index |
+| [docs/flows/](docs/flows/) | Flow orchestration documentation |
+| [docs/tools/](docs/tools/) | CrewAI tool wrappers documentation |
+| [docs/ops/](docs/ops/) | Operations guide (setup, CI, monitoring, testing) |
+| [docs/adrs/](docs/adrs/) | Architecture Decision Records |
+| [docs/compliance/](docs/compliance/) | Compliance controls matrix |
+| [docs/security/](docs/security/) | Threat model and security controls |
 
 ---
 

@@ -13,6 +13,24 @@
 
 ---
 
+## Supporting Modules (Phase 2–5)
+
+| Module | Path | Purpose | Phase |
+|--------|------|---------|-------|
+| Copy Writer | `app/content_generation/copy_writer.py` | Generate ad copy with disclosure | P5 |
+| Image Gen | `app/content_generation/image_gen.py` | Generate product images via AI | P5 |
+| Video Gen | `app/content_generation/video_gen.py` | Generate video storyboards/clips | P5 |
+| Calendar Planner | `app/content_generation/calendar_planner.py` | Growth calendar + scheduling | P4 |
+| Trend Hooks | `app/content_generation/trend_hooks.py` | Trending hooks + viral patterns | P4 |
+| SEO Auditor | `app/analyzers/seo_auditor.py` | SEO scoring + keyword analysis | P4 |
+| Performance Learner | `app/analytics/performance_learner.py` | Learn from past metrics | P5 |
+| Chat Engine | `app/analytics/chat_engine.py` | AI chat for analytics queries | P5 |
+| Approval Gate | `app/approval/__init__.py` | Human-in-the-loop with audit | P5 |
+| Publisher | `app/publishers/__init__.py` | Multi-platform publish + dedup | P5 |
+| Scheduler | `app/scheduling/__init__.py` | Post scheduling engine | P5 |
+
+---
+
 ## Agent: product_intake
 
 | Attribute | Value |
