@@ -5,6 +5,7 @@ No external scraping — only uses product data + LLM reasoning.
 """
 from __future__ import annotations
 
+import json
 from datetime import UTC, datetime
 from typing import Any
 
@@ -96,7 +97,6 @@ class ProductEnrichmentAgent(BaseAgent):
 
     def _llm_category(self, product: ProductRecord) -> list[str]:
         """Use LLM for category mapping."""
-        import json
         system = (
             "You classify products into categories. "
             "Return a JSON array of strings representing the category path, "
@@ -192,7 +192,6 @@ class ProductEnrichmentAgent(BaseAgent):
         self, product: ProductRecord, category_path: list[str],
     ) -> list[str]:
         """Use LLM for use case discovery."""
-        import json
         system = (
             "You identify product use cases for marketing. "
             "Return a JSON array of 3 short use-case strings."

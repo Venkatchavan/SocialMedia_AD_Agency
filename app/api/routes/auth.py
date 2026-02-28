@@ -5,13 +5,15 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field
 
+from app.config import get_settings
 from app.core.auth import PasswordHasher, Role, TokenManager
 
 router = APIRouter()
 
+_settings = get_settings()
 # In-memory user store (will be replaced by DB in production)
-_password_hasher = PasswordHasher()
-_token_manager = TokenManager()
+_password_hasher = PasswordHasher(secret_key=_settings.auth_secret_key or "dev-only-secret")
+_token_manager = TokenManager(secret_key=_settings.jwt_secret_key or "dev-only-jwt-secret")
 
 
 class LoginRequest(BaseModel):

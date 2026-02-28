@@ -6,7 +6,9 @@ The `app/flows/` package contains the orchestration layer that drives the entire
 
 | Flow | Module | Purpose |
 |------|--------|---------|
-| Content Pipeline | `content_pipeline.py` | Main 7-step synchronous pipeline |
+| Content Pipeline | `content_pipeline.py` | Main 8-step synchronous pipeline |
+| Pipeline State | `pipeline_state.py` | PipelineStatus enum + PipelineState model (P6 extraction) |
+| Pipeline Steps | `pipeline_steps.py` | Heavy step methods mixin (P6 extraction) |
 | Async Pipeline | `async_pipeline.py` | Concurrent stage executor (U-7) |
 | Publish Flow | `publish_flow.py` | Post-QA multi-platform publishing |
 | Experiment Flow | `experiment_flow.py` | A/B testing and variant management |
@@ -15,8 +17,8 @@ The `app/flows/` package contains the orchestration layer that drives the entire
 
 ## Content Pipeline Flow
 
-**Module:** `app/flows/content_pipeline.py`  
-**Class:** `ContentPipelineFlow`
+**Module:** `app/flows/content_pipeline.py` (imports `pipeline_state.py`, mixes in `pipeline_steps.py`)  
+**Class:** `ContentPipelineFlow(PipelineStepsMixin)`
 
 The master orchestration flow that drives the full ad creation lifecycle:
 
@@ -27,7 +29,7 @@ Content Generation → QA → Platform Adaptation → Publish
 
 ### Pipeline State
 
-Uses `PipelineState` (Pydantic model) as shared state across all steps:
+Uses `PipelineState` (from `app/flows/pipeline_state.py`) as shared state:
 
 | Field | Type | Purpose |
 |-------|------|---------|
@@ -53,8 +55,12 @@ Uses `PipelineState` (Pydantic model) as shared state across all steps:
 | 3. Reference Mapping | `_step_reference_mapping` | `reference_intelligence_agent` | — |
 | 4. Rights Check | `_step_rights_check` | `rights_engine` + `orchestrator` | APPROVE / REWRITE / REJECT |
 | 5. Content Gen | `_step_content_generation` | `scriptwriter` + `caption_seo` | — |
+| 5b. Manager Review | `_step_manager_review` | `manager_agent` (LLM) | APPROVE / REWRITE |
 | 6. QA | `_step_qa` | `qa_checker` + `orchestrator` | APPROVE / REWRITE / REJECT |
 | 7. Publish | `_step_publish` | Platform adapters | — |
+
+> Steps 4–7 and `_finalize` live in `pipeline_steps.py` (PipelineStepsMixin).  
+> Steps 1–3 and 5b remain in `content_pipeline.py`.
 
 ### Branching Logic
 

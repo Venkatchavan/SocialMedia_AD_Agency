@@ -19,7 +19,8 @@ from app.agents.product_intake import ProductIntakeAgent
 from app.agents.reference_intelligence import ReferenceIntelligenceAgent
 from app.agents.scriptwriter import ScriptwriterAgent
 from app.config import get_settings
-from app.flows.content_pipeline import ContentPipelineFlow, PipelineState
+from app.flows.content_pipeline import ContentPipelineFlow
+from app.flows.pipeline_state import PipelineState
 from app.services.audit_logger import AuditLogger
 from app.services.content_hasher import ContentHasher
 from app.services.llm_client import LLMClient

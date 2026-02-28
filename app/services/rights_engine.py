@@ -21,20 +21,14 @@ import structlog
 from app.schemas.reference import Reference, ReferenceBundle
 from app.schemas.rights import RightsDecision, RightsRecord
 from app.services.audit_logger import AuditLogger
+from app.services.rights_checks import (
+    check_commentary,
+    check_licensed,
+    check_public_domain,
+    check_style_only,
+)
 
 logger = structlog.get_logger(__name__)
-
-
-# Known IP elements that must be blocked in style_only references
-KNOWN_TRADEMARK_PATTERNS: list[str] = [
-    # These are examples — the production registry would be much larger
-    "mario", "luigi", "pokemon", "pikachu", "naruto", "sasuke",
-    "goku", "vegeta", "spider-man", "spiderman", "batman", "superman",
-    "iron man", "ironman", "captain america", "thor", "hulk",
-    "mickey mouse", "disney", "marvel", "dc comics",
-    "tanjiro", "nezuko", "demon slayer", "jujutsu kaisen",
-    "one piece", "luffy", "zoro",
-]
 
 
 class RightsEngine:
@@ -75,14 +69,15 @@ class RightsEngine:
         record = self._registry.get(reference.title.lower())
 
         # Route by reference type
-        if reference.reference_type == "licensed_direct":
-            decision = self._check_licensed(reference, record)
-        elif reference.reference_type == "public_domain":
-            decision = self._check_public_domain(reference, record)
-        elif reference.reference_type == "style_only":
-            decision = self._check_style_only(reference, record)
-        elif reference.reference_type == "commentary":
-            decision = self._check_commentary(reference, record)
+        checkers = {
+            "licensed_direct": check_licensed,
+            "public_domain": check_public_domain,
+            "style_only": check_style_only,
+            "commentary": check_commentary,
+        }
+        checker = checkers.get(reference.reference_type)
+        if checker:
+            decision = checker(reference, record)
         else:
             decision = RightsDecision(
                 reference_id=reference.reference_id,
@@ -126,201 +121,6 @@ class RightsEngine:
 
         return decision
 
-    def _check_licensed(
-        self, ref: Reference, record: RightsRecord | None
-    ) -> RightsDecision:
-        """Check licensed_direct: requires active license with commercial+social scope."""
-        base = {
-            "reference_id": ref.reference_id,
-            "reference_title": ref.title,
-            "reference_type": ref.reference_type,
-        }
-
-        if not record:
-            return RightsDecision(
-                **base,
-                decision="REJECT",
-                reason="No license record found for direct use",
-                risk_score=95,
-            )
-
-        if record.status != "active":
-            return RightsDecision(
-                **base,
-                decision="REJECT",
-                reason=f"License status is '{record.status}', not active",
-                risk_score=90,
-            )
-
-        if record.license_expiry and record.license_expiry < datetime.now(tz=UTC):
-            return RightsDecision(
-                **base,
-                decision="REJECT",
-                reason="License has expired",
-                risk_score=90,
-            )
-
-        if not record.license_scope.get("commercial"):
-            return RightsDecision(
-                **base,
-                decision="REJECT",
-                reason="License does not cover commercial use",
-                risk_score=85,
-            )
-
-        if not record.license_scope.get("social"):
-            return RightsDecision(
-                **base,
-                decision="REJECT",
-                reason="License does not cover social media distribution",
-                risk_score=80,
-            )
-
-        if not record.license_proof_url:
-            return RightsDecision(
-                **base,
-                decision="REJECT",
-                reason="No license proof document on file",
-                risk_score=85,
-            )
-
-        return RightsDecision(
-            **base,
-            decision="APPROVE",
-            reason="Valid active license with commercial + social scope",
-            risk_score=10,
-        )
-
-    def _check_public_domain(
-        self, ref: Reference, record: RightsRecord | None
-    ) -> RightsDecision:
-        """Check public_domain: must be confirmed public domain."""
-        base = {
-            "reference_id": ref.reference_id,
-            "reference_title": ref.title,
-            "reference_type": ref.reference_type,
-        }
-
-        # Check if we have a registry entry confirming public domain
-        if record and record.reference_type == "public_domain" and record.status == "active":
-            return RightsDecision(
-                **base,
-                decision="APPROVE",
-                reason="Confirmed public domain in registry",
-                risk_score=5,
-            )
-
-        # If no record but it's a well-known public domain work, we could check
-        # For now, without confirmation, we REJECT (fail-safe)
-        if not record:
-            return RightsDecision(
-                **base,
-                decision="REJECT",
-                reason="Public domain status unconfirmed — no registry entry",
-                risk_score=60,
-            )
-
-        return RightsDecision(
-            **base,
-            decision="REJECT",
-            reason=f"Registry entry exists but type is '{record.reference_type}', not public_domain",
-            risk_score=70,
-        )
-
-    def _check_style_only(
-        self, ref: Reference, record: RightsRecord | None
-    ) -> RightsDecision:
-        """Check style_only: must not include specific IP elements."""
-        base = {
-            "reference_id": ref.reference_id,
-            "reference_title": ref.title,
-            "reference_type": ref.reference_type,
-        }
-
-        # Check for trademarked/copyrighted elements in usage mode and title
-        violations = self._find_ip_violations(ref)
-
-        if violations:
-            return RightsDecision(
-                **base,
-                decision="REWRITE",
-                reason=f"Style reference contains IP elements that must be removed: {violations}",
-                risk_score=65,
-                rewrite_instructions=(
-                    f"Remove these specific elements: {violations}. "
-                    "Replace with generic style/aesthetic descriptors."
-                ),
-            )
-
-        # Check if auto-blocked in registry
-        if record and record.auto_block:
-            return RightsDecision(
-                **base,
-                decision="REJECT",
-                reason="Reference is auto-blocked in rights registry",
-                risk_score=100,
-            )
-
-        return RightsDecision(
-            **base,
-            decision="APPROVE",
-            reason="Style reference with no IP elements detected",
-            risk_score=max(ref.risk_score, 15),
-        )
-
-    def _check_commentary(
-        self, ref: Reference, record: RightsRecord | None
-    ) -> RightsDecision:
-        """Check commentary: must be genuine commentary, not promotional impersonation."""
-        base = {
-            "reference_id": ref.reference_id,
-            "reference_title": ref.title,
-            "reference_type": ref.reference_type,
-        }
-
-        # Check for auto-block
-        if record and record.auto_block:
-            return RightsDecision(
-                **base,
-                decision="REJECT",
-                reason="Reference is auto-blocked in rights registry",
-                risk_score=100,
-            )
-
-        # Commentary with known blocked elements
-        if record and record.blocked_elements:
-            usage_lower = ref.allowed_usage_mode.lower()
-            found_blocked = [
-                elem for elem in record.blocked_elements if elem.lower() in usage_lower
-            ]
-            if found_blocked:
-                return RightsDecision(
-                    **base,
-                    decision="REWRITE",
-                    reason=f"Commentary references blocked elements: {found_blocked}",
-                    risk_score=55,
-                    rewrite_instructions=f"Remove references to: {found_blocked}",
-                )
-
-        return RightsDecision(
-            **base,
-            decision="APPROVE",
-            reason="Legitimate commentary reference",
-            risk_score=max(ref.risk_score, 25),
-        )
-
-    @staticmethod
-    def _find_ip_violations(ref: Reference) -> list[str]:
-        """Find trademarked/copyrighted elements in the reference usage description."""
-        violations: list[str] = []
-        text_to_check = f"{ref.title} {ref.allowed_usage_mode}".lower()
-
-        for pattern in KNOWN_TRADEMARK_PATTERNS:
-            if pattern in text_to_check:
-                violations.append(pattern)
-
-        return violations
-
     def add_to_registry(self, record: RightsRecord) -> None:
         """Add or update a rights record in the registry."""
         self._registry[record.reference_title.lower()] = record
@@ -335,8 +135,6 @@ class RightsEngine:
     @staticmethod
     def _dict_to_reference(data: dict) -> Reference:
         """Convert a dict to a Reference, filling defaults for missing fields."""
-        from datetime import datetime
-
         defaults = {
             "reference_id": data.get("reference_id", "unknown"),
             "title": data.get("title", "Unknown"),

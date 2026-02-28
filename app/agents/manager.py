@@ -66,15 +66,7 @@ class ManagerAgent(BaseAgent):
         self._agent_health: dict[str, dict[str, Any]] = {}
 
     def execute(self, inputs: dict[str, Any]) -> dict[str, Any]:
-        """Dispatch to the appropriate management action.
-
-        Actions:
-            - route_rights: Route a rights decision (APPROVE/REWRITE/REJECT)
-            - route_qa: Route a QA decision
-            - review_content: LLM-powered content quality review
-            - track_agent: Record agent execution health
-            - get_status: Return pipeline supervision status
-        """
+        """Dispatch to the appropriate management action."""
         action = inputs.get("action", "get_status")
         dispatch = {
             "route_rights": self._route_rights,
@@ -86,9 +78,7 @@ class ManagerAgent(BaseAgent):
         handler = dispatch.get(action, self._unknown_action)
         return handler(inputs)
 
-    # ------------------------------------------------------------------
-    # Routing decisions (deterministic)
-    # ------------------------------------------------------------------
+    # ── Routing decisions (deterministic) ──
 
     def _route_rights(self, inputs: dict[str, Any]) -> dict[str, Any]:
         """Route based on rights verification decision."""
@@ -150,9 +140,7 @@ class ManagerAgent(BaseAgent):
             "reason": f"{scope} rejected: {reason or 'No reason provided'}",
         }
 
-    # ------------------------------------------------------------------
-    # LLM-powered content review
-    # ------------------------------------------------------------------
+    # ── LLM-powered content review ──
 
     def _review_content(self, inputs: dict[str, Any]) -> dict[str, Any]:
         """Use LLM to review generated content quality."""
@@ -190,9 +178,7 @@ class ManagerAgent(BaseAgent):
             "feedback": review.get("feedback", ""),
         }
 
-    # ------------------------------------------------------------------
-    # Agent health tracking
-    # ------------------------------------------------------------------
+    # ── Agent health tracking ──
 
     def _track_agent(self, inputs: dict[str, Any]) -> dict[str, Any]:
         """Record agent execution metrics."""
@@ -229,9 +215,7 @@ class ManagerAgent(BaseAgent):
             "reason": f"Unknown manager action: {inputs.get('action')}",
         }
 
-    # ------------------------------------------------------------------
-    # Supervised execution helper
-    # ------------------------------------------------------------------
+    # ── Supervised execution ──
 
     def supervise(
         self, agent: BaseAgent, inputs: dict[str, Any],

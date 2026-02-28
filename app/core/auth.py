@@ -63,10 +63,20 @@ class UserRecord:
     bindings: list[WorkspaceBinding] = field(default_factory=list)
 
 
+_INSECURE_DEFAULTS = frozenset({
+    "", "default-secret-change-me", "default-jwt-secret-change-me",
+})
+
+
 class PasswordHasher:
     """HMAC-SHA256 password hashing (no bcrypt dependency needed for core)."""
 
-    def __init__(self, secret_key: str = "default-secret-change-me") -> None:
+    def __init__(self, secret_key: str) -> None:
+        if secret_key in _INSECURE_DEFAULTS:
+            raise ValueError(
+                "PasswordHasher requires a real secret_key. "
+                "Set AUTH_SECRET_KEY in .env (see Agents.md Rule 6)."
+            )
         self._secret = secret_key.encode()
 
     def hash_password(self, password: str) -> str:
@@ -88,10 +98,15 @@ class TokenManager:
 
     def __init__(
         self,
-        secret_key: str = "default-jwt-secret-change-me",
+        secret_key: str,
         access_ttl: int = 3600,
         refresh_ttl: int = 86400 * 7,
     ) -> None:
+        if secret_key in _INSECURE_DEFAULTS:
+            raise ValueError(
+                "TokenManager requires a real secret_key. "
+                "Set JWT_SECRET_KEY in .env (see Agents.md Rule 6)."
+            )
         self._secret = secret_key.encode()
         self._access_ttl = access_ttl
         self._refresh_ttl = refresh_ttl

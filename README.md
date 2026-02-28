@@ -2,8 +2,8 @@
 
 [![CI](https://github.com/Venkatchavan/SocialMedia_AD_Agency/actions/workflows/ci.yml/badge.svg)](https://github.com/Venkatchavan/SocialMedia_AD_Agency/actions/workflows/ci.yml)
 ![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue)
-![Tests](https://img.shields.io/badge/tests-401%20passed-brightgreen)
-![Coverage](https://img.shields.io/badge/coverage-75%25-green)
+![Tests](https://img.shields.io/badge/tests-430%20passed-brightgreen)
+![Coverage](https://img.shields.io/badge/coverage-74%25-green)
 
 > Production-grade SaaS platform for automated affiliate ad creation and multi-platform publishing — powered by CrewAI agents, compliant by design.
 
@@ -26,8 +26,9 @@
 
 ## Key Features
 
-- **CrewAI Agent Orchestration** — 6 specialized agents (product intake, enrichment, reference intelligence, scriptwriter, caption/SEO, orchestrator)
-- **Multi-Provider LLM Router** — OpenAI, Gemini, Anthropic, Mistral; priority-ordered via `LLM_PRIORITY` env var
+- **CrewAI Agent Orchestration** — 7 agents (manager, product intake, enrichment, reference intelligence, scriptwriter, caption/SEO, orchestrator)
+- **Manager Agent** — Supervises pipeline agents; LLM-powered quality review; deterministic routing (Phase 6)
+- **Multi-Provider LLM Router** — OpenAI, Gemini, Anthropic, Mistral; `LLM_DRY_RUN=true` for CI-safe testing
 - **FastAPI REST API** — Auth, RBAC, workspace management, async pipeline triggers
 - **Multi-Tenancy** — Tenant-isolated data with row-level security
 - **PostgreSQL + Alembic** — Versioned schema migrations
@@ -37,7 +38,7 @@
 - **Vector Store** — Semantic search for reference ads and content
 - **Export Pipeline** — JSON, Markdown, HTML, PDF, PPTX formats
 - **White-Label Support** — Custom branding per tenant
-- **401 tests, 75% coverage** — Enforced by CI (minimum 70%)
+- **430 tests, 74% coverage** — Enforced by CI (minimum 70%)
 
 ---
 
@@ -49,6 +50,7 @@
 │              (Auth, RBAC, Multi-Tenancy)                 │
 ├─────────────────────────────────────────────────────────┤
 │                  CrewAI Agent Layer                       │
+│          manager (supervisor + LLM review)                │
 │  product_intake → enrichment → reference_intelligence    │
 │  → scriptwriter → caption_seo → orchestrator             │
 ├─────────────────────────────────────────────────────────┤
@@ -71,7 +73,7 @@
 ```
 app/
 ├── adapters/           Platform adapters (Amazon, TikTok, Instagram, X, Pinterest)
-├── agents/             CrewAI agents (intake, enrichment, reference, scriptwriter, caption, orchestrator)
+├── agents/             CrewAI agents (manager, intake, enrichment, reference, scriptwriter, caption, orchestrator)
 ├── analytics/          Performance metrics, learning engine, AI chat
 ├── analyzers/          SEO auditor
 ├── api/                FastAPI app + routes (auth, health, pipelines, workspaces)
@@ -146,12 +148,14 @@ GitHub Actions workflow with 2 jobs:
 
 | Variable | Description | Required |
 |----------|-------------|----------|
-| `LLM_PRIORITY` | Comma-separated LLM providers: `openai,gemini,anthropic` | Yes |
+| `LLM_DRY_RUN` | `true` for deterministic stubs (CI-safe), `false` for real LLM calls | No (default: `true`) |
+| `LLM_PRIORITY` | Comma-separated LLM providers: `openai,gemini,anthropic` | If `LLM_DRY_RUN=false` |
 | `OPENAI_API_KEY` | OpenAI API key | If using OpenAI |
 | `GEMINI_API_KEY` | Google Gemini API key | If using Gemini |
-| `DATABASE_URL` | PostgreSQL connection string | For production |
+| `DATABASE_URL` | Database connection string (default: SQLite for dev) | For production |
 | `REDIS_URL` | Redis connection string | For caching |
 | `STRIPE_SECRET_KEY` | Stripe billing API key | For billing |
+| `AUTH_SECRET_KEY` | Secret for password hashing | Yes |
 | `JWT_SECRET_KEY` | Secret for JWT auth tokens | Yes |
 
 ---
@@ -179,7 +183,7 @@ See [Agents.md](Agents.md) for the 10 non-negotiable agentic rules.
 | [Agents.md](Agents.md) | 10 agentic compliance rules |
 | [Agents_Security.md](Agents_Security.md) | Security architecture & threat model |
 | [Documentation.md](Documentation.md) | Documentation generation rules |
-| [docs/phases/](docs/phases/) | Phase 1 MVP + Phase 2–5 SaaS upgrade docs |
+| [docs/phases/](docs/phases/) | Phase 1 MVP + Phase 2–5 SaaS + Phase 6 LLM agents docs |
 | [docs/agents/](docs/agents/) | Agent registry and module index |
 | [docs/flows/](docs/flows/) | Flow orchestration documentation |
 | [docs/tools/](docs/tools/) | CrewAI tool wrappers documentation |

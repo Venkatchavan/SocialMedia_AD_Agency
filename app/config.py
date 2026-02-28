@@ -44,6 +44,10 @@ class Settings(BaseSettings):
     # Secrets Manager
     secrets_backend: str = Field(default="env", alias="SECRETS_BACKEND")
 
+    # Auth secrets (MUST be overridden in production — see Agents.md Rule 6)
+    auth_secret_key: str = Field(default="", alias="AUTH_SECRET_KEY")
+    jwt_secret_key: str = Field(default="", alias="JWT_SECRET_KEY")
+
     # Content thresholds
     max_rewrite_attempts: int = Field(default=3, alias="MAX_REWRITE_ATTEMPTS")
     similarity_threshold: float = Field(default=0.85, alias="SIMILARITY_THRESHOLD")

@@ -10,8 +10,9 @@
 |-----------|------------------|----------|
 | `RightsEngine.verify()` | Before content generation | Returns APPROVED / REWRITE / REJECT |
 | `QAChecker.check()` | Before publishing | Validates compliance, disclosure, quality |
-| `ContentPipelineFlow._step_rights_check()` | Pipeline step 4 | Blocks pipeline on REJECT |
-| `ContentPipelineFlow._step_qa()` | Pipeline step 6 | Blocks publish on REJECT |
+| `ContentPipelineFlow._step_rights_check()` | Pipeline step 4 (in `pipeline_steps.py`) | Blocks pipeline on REJECT |
+| `ContentPipelineFlow._step_qa()` | Pipeline step 6 (in `pipeline_steps.py`) | Blocks publish on REJECT |
+| `ManagerAgent._review_content()` | Pipeline step 5b (LLM quality gate, P6) | Blocks on low quality score |
 | `OrchestratorAgent._route_rights_decision()` | Decision routing | Enforces max rewrite loops |
 
 ### Fail-Safe Behavior
@@ -62,6 +63,8 @@ Blocked patterns:
 | `commentary` | ❌ | ✅ (limited) | Platform/policy-safe usage, logged |
 
 ### Deterministic Rules
+
+Rights checking logic is in `app/services/rights_checks.py` (P6 extraction). Trademark patterns live in `app/services/rights_data.py`.
 
 - `licensed_direct` without `license_id` → REJECTED
 - `style_only` with trademark elements → REWRITE

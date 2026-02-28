@@ -4,6 +4,7 @@
 
 | Agent ID | Module | Type | Phase |
 |----------|--------|------|-------|
+| `manager` | `app/agents/manager.py` | Hybrid (LLM + deterministic) | P6 |
 | `product_intake` | `app/agents/product_intake.py` | Hybrid | P1 |
 | `product_enrichment` | `app/agents/product_enrichment.py` | LLM | P1 |
 | `reference_intelligence` | `app/agents/reference_intelligence.py` | LLM | P1 |
@@ -27,7 +28,14 @@
 | Chat Engine | `app/analytics/chat_engine.py` | AI chat for analytics queries | P5 |
 | Approval Gate | `app/approval/__init__.py` | Human-in-the-loop with audit | P5 |
 | Publisher | `app/publishers/__init__.py` | Multi-platform publish + dedup | P5 |
+| Token Vault | `app/publishers/token_vault.py` | AES-256 OAuth token storage | P6 |
 | Scheduler | `app/scheduling/__init__.py` | Post scheduling engine | P5 |
+| LLM Client | `app/services/llm_client.py` | OpenAI wrapper + dry-run mode | P6 |
+| Script Templates | `app/agents/script_templates.py` | Extracted script angle templates | P6 |
+| Rights Checks | `app/services/rights_checks.py` | Per-type rights verification funcs | P6 |
+| Rights Data | `app/services/rights_data.py` | Trademark pattern registry | P6 |
+| Pipeline State | `app/flows/pipeline_state.py` | PipelineStatus enum + PipelineState model | P6 |
+| Pipeline Steps | `app/flows/pipeline_steps.py` | Heavy step method mixin | P6 |
 
 ---
 
@@ -113,6 +121,32 @@
 | **Outputs** | `next_step`, `should_continue`, `reason` |
 | **Max Retries** | 3 rewrite loops before forced REJECT |
 | **Guardrails** | Deterministic — no LLM involved in routing decisions |
+
+---
+
+## Agent: manager (Phase 6)
+
+| Attribute | Value |
+|-----------|-------|
+| **ID** | `manager` |
+| **Module** | `app/agents/manager.py` |
+| **Role** | Supervises all worker agents; routes decisions; LLM quality review |
+| **Type** | Hybrid — deterministic routing + LLM content review |
+| **Inputs** | `action` (route_rights / route_qa / review_content / track_agent / get_status) |
+| **Outputs** | `next_step`, `should_continue`, `reason`, `quality_score` |
+| **Max Retries** | 3 rewrite loops per scope before forced REJECT |
+| **LLM Usage** | `review_content` action uses LLM to score quality (0–100) and check brand safety |
+| **Guardrails** | All routing is deterministic; LLM only used for quality scoring |
+
+### Actions
+
+| Action | Purpose | LLM? |
+|--------|---------|------|
+| `route_rights` | Route APPROVE/REWRITE/REJECT from rights check | No |
+| `route_qa` | Route APPROVE/REWRITE/REJECT from QA check | No |
+| `review_content` | Score content quality, check disclosure/brand safety | Yes |
+| `track_agent` | Record agent run metrics (duration, failures) | No |
+| `get_status` | Return supervision status + health metrics | No |
 
 ---
 

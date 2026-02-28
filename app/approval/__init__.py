@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import hashlib
 from dataclasses import dataclass, field
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 
@@ -85,31 +85,17 @@ class ApprovalGate:
         return item
 
     def approve(
-        self,
-        content_id: str,
-        reviewer: str,
-        scheduled_at: str = "",
-        notes: str = "",
+        self, content_id: str, reviewer: str,
+        scheduled_at: str = "", notes: str = "",
     ) -> ReviewDecision:
         """Approve content for publishing."""
         item = self._items.get(content_id)
         if item is None:
-            return ReviewDecision(
-                content_id=content_id,
-                action="approve",
-                reviewer=reviewer,
-                timestamp=datetime.now(UTC).isoformat(),
-                success=False,
-                error="Content not found",
-            )
-
+            return self._not_found(content_id, "approve", reviewer)
         if item.status not in (ContentStatus.READY_FOR_REVIEW, ContentStatus.IN_REVIEW):
             return ReviewDecision(
-                content_id=content_id,
-                action="approve",
-                reviewer=reviewer,
-                timestamp=datetime.now(UTC).isoformat(),
-                success=False,
+                content_id=content_id, action="approve", reviewer=reviewer,
+                timestamp=datetime.now(UTC).isoformat(), success=False,
                 error=f"Cannot approve content in status: {item.status.value}",
             )
 
@@ -136,19 +122,12 @@ class ApprovalGate:
         )
 
     def reject(
-        self, content_id: str, reviewer: str, notes: str = ""
+        self, content_id: str, reviewer: str, notes: str = "",
     ) -> ReviewDecision:
         """Reject content — will not be published."""
         item = self._items.get(content_id)
         if item is None:
-            return ReviewDecision(
-                content_id=content_id,
-                action="reject",
-                reviewer=reviewer,
-                timestamp=datetime.now(UTC).isoformat(),
-                success=False,
-                error="Content not found",
-            )
+            return self._not_found(content_id, "reject", reviewer)
 
         item.status = ContentStatus.REJECTED
         item.reviewed_by = reviewer
@@ -171,23 +150,13 @@ class ApprovalGate:
         )
 
     def edit(
-        self,
-        content_id: str,
-        reviewer: str,
-        caption: str | None = None,
-        hashtags: list[str] | None = None,
+        self, content_id: str, reviewer: str,
+        caption: str | None = None, hashtags: list[str] | None = None,
     ) -> ReviewDecision:
         """Edit content inline before approving."""
         item = self._items.get(content_id)
         if item is None:
-            return ReviewDecision(
-                content_id=content_id,
-                action="edit",
-                reviewer=reviewer,
-                timestamp=datetime.now(UTC).isoformat(),
-                success=False,
-                error="Content not found",
-            )
+            return self._not_found(content_id, "edit", reviewer)
 
         if caption is not None:
             item.caption = caption
@@ -233,6 +202,15 @@ class ApprovalGate:
         ]
 
     # ── Rule 7: Auditability helpers ──
+
+    @staticmethod
+    def _not_found(content_id: str, action: str, reviewer: str) -> ReviewDecision:
+        """Return a failure ReviewDecision when content is not found."""
+        return ReviewDecision(
+            content_id=content_id, action=action, reviewer=reviewer,
+            timestamp=datetime.now(UTC).isoformat(),
+            success=False, error="Content not found",
+        )
 
     @staticmethod
     def _hash_content(item: ContentItem) -> str:

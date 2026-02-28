@@ -12,6 +12,8 @@
 | Duplicate spam | Same content posted multiple times | `ContentHasher` + `QAChecker` duplicate detection | ✅ Implemented |
 | Platform API abuse | Rate limit exceeded, account restricted | `RateLimiter` + `CircuitBreaker` per platform | ✅ Implemented |
 | Tampered audit log | Evidence of violations destroyed | SHA-256 hash chain with `verify_chain_integrity()` | ✅ Implemented |
+| Hardcoded auth secrets | Default keys allow token forgery | `PasswordHasher` / `TokenManager` reject insecure defaults at startup (P6) | ✅ Implemented |
+| Manager Agent prompt injection | LLM review manipulated | Manager only reviews content via `_review_content`; routing is deterministic (P6) | ✅ Implemented |
 
 ## 2. Authentication & Authorization
 
@@ -31,6 +33,8 @@
 - **Backend**: Configurable via `SECRETS_BACKEND` env var (`env` | `aws` | `vault`)
 - **Access**: Only via `SecretsManager.get()` — never direct env reads in agents
 - **Platform credentials**: Retrieved by platform prefix (e.g., `TIKTOK_*`, `INSTAGRAM_*`)
+- **OAuth tokens**: Stored via `TokenVault` (`app/publishers/token_vault.py`) with HMAC-based encryption (production: AES-256-GCM)
+- **Auth secrets**: `AUTH_SECRET_KEY` and `JWT_SECRET_KEY` must be set via env vars; startup guard rejects insecure defaults
 - **Never logged**: Secrets manager ensures no secret values appear in logs or audit trail
 
 ## 3. Media Security
@@ -76,9 +80,10 @@ The `AgentConstitution.validate_input()` method scans for:
 
 ## 7. Security Coding Standards
 
-- **No hardcoded secrets**: All credentials via `SecretsManager`
+- **No hardcoded secrets**: All credentials via `SecretsManager`; auth defaults rejected at startup (P6 hardening)
 - **No scraping**: Only official APIs (`Agents.md` Rule 3)
 - **No browser automation**: All platform interactions via REST APIs
 - **Fail-safe defaults**: Unknown = REJECT, missing disclosure = REWRITE
 - **Type safety**: Pydantic v2 models with strict validation
 - **Audit coverage**: Every decision produces an `AuditEvent`
+- **SQLite persistence**: Dev/local audit logs written to SQLite via `session_factory` (P6)

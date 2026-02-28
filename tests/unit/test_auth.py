@@ -24,6 +24,12 @@ class TestPasswordHasher:
     def setup_method(self) -> None:
         self.hasher = PasswordHasher(secret_key="test-secret")
 
+    def test_rejects_insecure_default(self) -> None:
+        with pytest.raises(ValueError, match="real secret_key"):
+            PasswordHasher(secret_key="")
+        with pytest.raises(ValueError, match="real secret_key"):
+            PasswordHasher(secret_key="default-secret-change-me")
+
     def test_hash_returns_hex_string(self) -> None:
         h = self.hasher.hash_password("mypassword")
         assert isinstance(h, str)
@@ -60,6 +66,12 @@ class TestTokenManager:
             access_ttl=3600,
             refresh_ttl=86400,
         )
+
+    def test_rejects_insecure_default(self) -> None:
+        with pytest.raises(ValueError, match="real secret_key"):
+            TokenManager(secret_key="")
+        with pytest.raises(ValueError, match="real secret_key"):
+            TokenManager(secret_key="default-jwt-secret-change-me")
 
     def test_create_and_verify_access_token(self) -> None:
         token = self.tm.create_access_token(
