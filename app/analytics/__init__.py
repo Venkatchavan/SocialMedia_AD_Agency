@@ -6,7 +6,7 @@ Pull post-publish metrics at 6h/24h/72h intervals per platform.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 
