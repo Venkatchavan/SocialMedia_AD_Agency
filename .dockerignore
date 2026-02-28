@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual envs
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
+
+# Tests & dev tooling
+tests/
+docs/
+*.md
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+
+# Environment files (secrets copied via env_file)
+.env
+.env.*
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Infrastructure (not needed in image)
+infra/
