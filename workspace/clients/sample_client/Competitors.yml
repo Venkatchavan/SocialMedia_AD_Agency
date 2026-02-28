@@ -1,0 +1,34 @@
+workspace_id: "sample_client"
+platforms:
+  - meta
+  - tiktok
+  - x
+  - pinterest
+
+date_range_days: 30
+max_assets_per_brand: 30
+
+competitors:
+  - name: "AG1"
+    meta_ad_library_url: "https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=US&q=AG1"
+    tiktok_keywords:
+      - "AG1 supplement"
+      - "athletic greens"
+    x_advertiser_handle: "drinkAG1"
+    pinterest_advertiser_name: "AG1"
+
+  - name: "Ritual"
+    meta_ad_library_url: "https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=US&q=Ritual%20vitamins"
+    tiktok_keywords:
+      - "Ritual vitamins"
+      - "Ritual supplements"
+    x_advertiser_handle: "ritual"
+    pinterest_advertiser_name: "Ritual"
+
+  - name: "Seed"
+    meta_ad_library_url: "https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=US&q=Seed%20probiotics"
+    tiktok_keywords:
+      - "Seed probiotics"
+      - "Seed DS-01"
+    x_advertiser_handle: "seed"
+    pinterest_advertiser_name: "Seed"

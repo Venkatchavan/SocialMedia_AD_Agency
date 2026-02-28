@@ -1,0 +1,4 @@
+ad_id,ad_text,headline,cta_text,media_url,landing_page_url
+ad_001,"Try our new wellness supplement — 20% off your first order!","20% Off Today Only","Shop Now",https://picsum.photos/seed/wellness1/800/600,https://example.com/shop
+ad_002,"Science-backed ingredients. Real results in 30 days.","30-Day Results Guarantee","Learn More",https://picsum.photos/seed/wellness2/800/600,https://example.com/results
+ad_003,"Bundle & save — 3 products for the price of 2","Best Value Bundle","Shop Now",https://picsum.photos/seed/wellness3/800/600,https://example.com/bundle
